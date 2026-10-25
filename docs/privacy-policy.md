@@ -1,50 +1,44 @@
-# UV Glow — Privacy Policy
+# UV Glow — Privacy policy
 
-_Last updated: [DATE]_
+<!-- Public copy of the in-app policy (app/src/main/res/values/strings.xml, privacy_* strings).
+     Keep both in sync. Replace the contact email with AppLinks.CONTACT_EMAIL's real value. -->
 
-This policy covers the UV Glow Android app (package `com.tubers.blacklight`), published on
-Google Play by [DEVELOPER NAME].
+_Last updated: 25 October 2026_
 
-## Summary
+This policy covers the UV Glow Android app (package `com.tubers.blacklight`).
 
-UV Glow does not collect, store on any server, or share any personal data.
+## What the app does
 
-## What the app stores
+UV Glow shows a violet light effect on your screen and can switch on your phone's normal white
+camera LED. It does not produce real ultraviolet (UV) light.
 
-- **Settings stay on your device.** Your light settings (colour, brightness, beam width, glow,
-  effect and speed), comfort preferences (such as reduced motion and the flashing-lights warning),
-  saved presets and custom themes are stored only in the app's private storage on your device.
-- **Android backup.** If you have Android backup turned on, Android may include these settings in
-  your device backup (for example, Google's backup service for your Google Account) so they can be
-  restored on a new phone. That backup is handled by Android and your backup provider, not by us,
-  and you can turn it off in your device settings.
-- Nothing is sent to us or to anyone else. The app has no account, no analytics, no advertising
-  and no crash-reporting SDKs.
+## Data we collect
+
+None. There is no account, no analytics, no ads and no tracking, and no data is shared with anyone.
+
+## Data stored on your device
+
+Your settings, themes and presets are saved only on your phone. They may be included in your
+Android device backup if you have backup turned on.
+
+## Camera
+
+The app only switches the camera LED on and off. It never takes photos or video and does not
+request the camera permission.
 
 ## Purchases
 
-UV Glow Premium subscriptions are sold and processed by **Google Play**. We never see or receive
-your payment details. Google Play tells the app only whether you have an active subscription so
-Premium features can be unlocked. Google's handling of your purchase is described in the
-[Google Payments Privacy Notice](https://payments.google.com/payments/apis-secure/u/0/get_legal_document?ldo=0&ldt=privacynotice).
-You can manage or cancel your subscription at any time in Google Play › Payments & subscriptions.
-
-## Camera flash (LED)
-
-The optional "Phone flashlight (LED)" setting only switches your phone's camera flash on and off.
-The app does **not** take photos or videos, does not read camera images, and does not request the
-camera permission.
+Premium subscriptions are handled by Google Play. We don't see or store your payment details. You
+can manage or cancel your subscription in Google Play.
 
 ## Children
 
-UV Glow is not directed at children and does not knowingly collect any data from anyone,
-including children.
+UV Glow is not directed at children under 13, and it collects no data from anyone.
 
 ## Changes
 
-If this policy changes, the updated version will be posted at this address with a new
-"Last updated" date.
+If anything changes, we'll update this page and the date at the top.
 
 ## Contact
 
-Questions about this policy: **[CONTACT EMAIL]**
+Questions about this policy: your-email@example.com

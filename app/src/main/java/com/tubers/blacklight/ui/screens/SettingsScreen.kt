@@ -45,7 +45,7 @@ import com.tubers.blacklight.ui.state.StudioViewModel
 import com.tubers.blacklight.ui.theme.UvColors
 
 @Composable
-fun SettingsScreen(state: StudioUiState, vm: StudioViewModel, onReplayIntro: () -> Unit) {
+fun SettingsScreen(state: StudioUiState, vm: StudioViewModel, onReplayIntro: () -> Unit, onOpenPrivacy: () -> Unit) {
     var confirmReset by rememberSaveable { mutableStateOf(false) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
     val groupPadding = PaddingValues(horizontal = 14.dp, vertical = 2.dp)
@@ -145,11 +145,7 @@ fun SettingsScreen(state: StudioUiState, vm: StudioViewModel, onReplayIntro: () 
                         UvIcons.Shield,
                         "Privacy policy",
                         "No personal data collected or shared",
-                        {
-                            if (!context.openExternal(AppLinks.PRIVACY_POLICY_URL)) {
-                                vm.showMessage("Couldn’t open the privacy policy")
-                            }
-                        },
+                        onOpenPrivacy,
                     )
                 }
             }

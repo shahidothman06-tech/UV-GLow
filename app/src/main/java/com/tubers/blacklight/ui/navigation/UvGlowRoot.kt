@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -30,6 +29,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,6 +51,7 @@ import com.tubers.blacklight.ui.screens.HomeScreen
 import com.tubers.blacklight.ui.screens.IntroScreen
 import com.tubers.blacklight.ui.screens.PremiumScreen
 import com.tubers.blacklight.ui.screens.PresetsScreen
+import com.tubers.blacklight.ui.screens.PrivacyPolicyScreen
 import com.tubers.blacklight.ui.screens.SettingsScreen
 import com.tubers.blacklight.ui.screens.ThemesScreen
 import com.tubers.blacklight.ui.screens.TimerScreen
@@ -70,7 +71,19 @@ object Routes {
     const val SETTINGS = "settings"
     const val TIMER = "timer"
     const val PREMIUM = "premium"
+    const val PRIVACY = "privacy"
     const val INTRO = "intro"
+
+    /**
+     * Header title for screens opened on top of a tab (they get a back button and no tab is
+     * highlighted), or null for the tabs themselves and the intro.
+     */
+    fun subScreenTitle(route: String?): String? = when (route) {
+        TIMER -> "Auto-off timer"
+        PREMIUM -> "Premium"
+        PRIVACY -> "Privacy policy"
+        else -> null
+    }
 }
 
 /** Windows at least this wide in landscape get the side rail instead of the bottom bar. */
@@ -139,18 +152,22 @@ fun UvGlowRoot(vm: StudioViewModel) {
         }
 
         val showChrome = route != null && route != Routes.INTRO
-        val isSubScreen = route == Routes.TIMER || route == Routes.PREMIUM
+        val subScreenTitle = Routes.subScreenTitle(route)
+        val isSubScreen = subScreenTitle != null
 
+        // Landscape and wide windows use a side rail so content keeps its height. The window size
+        // comes from the configuration, not BoxWithConstraints: with the NavHost inside that
+        // sub-composition, a second rotation restored an out-of-date back stack.
+        val window = LocalConfiguration.current
+        val useRail = showChrome && window.screenWidthDp > window.screenHeightDp && window.screenWidthDp.dp >= RAIL_MIN_WIDTH
         // Side insets (landscape cutouts, 3-button nav on the side) pad the whole app once; the
         // bars below then only take their top/bottom insets.
-        BoxWithConstraints(
+        Box(
             Modifier
                 .fillMaxSize()
                 .background(ground)
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
         ) {
-            // Landscape and wide windows use a side rail so content keeps its height.
-            val useRail = showChrome && maxWidth > maxHeight && maxWidth >= RAIL_MIN_WIDTH
             Row(Modifier.fillMaxSize()) {
                 if (useRail) {
                     SideNav(Tabs, selectedRoute = if (isSubScreen) null else route, onSelect = { nav.openTab(it.route) })
@@ -163,7 +180,7 @@ fun UvGlowRoot(vm: StudioViewModel) {
                     topBar = {
                         if (showChrome) {
                             if (isSubScreen) {
-                                SubHeader(if (route == Routes.TIMER) "Auto-off timer" else "Premium", onBack = { nav.popBackStack() })
+                                SubHeader(subScreenTitle.orEmpty(), onBack = { nav.popBackStack() })
                             } else {
                                 TabHeader(onPremium = { nav.openScreen(Routes.PREMIUM) })
                             }
@@ -203,9 +220,21 @@ fun UvGlowRoot(vm: StudioViewModel) {
                         composable(Routes.EFFECTS) { EffectsScreen(vm.state(), vm, onOpenSettings = { nav.openTab(Routes.SETTINGS) }) }
                         composable(Routes.THEMES) { ThemesScreen(vm.state(), vm) }
                         composable(Routes.PRESETS) { PresetsScreen(vm.state(), vm) }
-                        composable(Routes.SETTINGS) { SettingsScreen(vm.state(), vm, onReplayIntro = { nav.openScreen(Routes.INTRO) }) }
+                        composable(Routes.SETTINGS) {
+                            SettingsScreen(
+                                vm.state(), vm,
+                                onReplayIntro = { nav.openScreen(Routes.INTRO) },
+                                onOpenPrivacy = { nav.openScreen(Routes.PRIVACY) },
+                            )
+                        }
                         composable(Routes.TIMER) { TimerScreen(vm.state(), vm) }
                         composable(Routes.PREMIUM) { PremiumScreen(vm.state(), vm) }
+                        composable(Routes.PRIVACY) {
+                            PrivacyPolicyScreen(
+                                onBack = { nav.popBackStack() },
+                                onEmailFailed = { vm.showMessage("No email app found") },
+                            )
+                        }
                         composable(Routes.INTRO) {
                             IntroScreen(onGetStarted = {
                                 vm.markIntroSeen()

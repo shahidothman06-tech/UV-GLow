@@ -1,4 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">UV Glow</string>
+
+    <!-- Privacy policy screen (Settings › About & safety › Privacy policy).
+         Keep docs/privacy-policy.md in sync: it is the public copy linked from Google Play. -->
+    <string name="privacy_title">Privacy policy</string>
+    <string name="privacy_last_updated">Last updated: 25 October 2026</string>
+
+    <string name="privacy_what_heading">What the app does</string>
+    <string name="privacy_what_body">UV Glow shows a violet light effect on your screen and can switch on your phone\'s normal white camera LED. It does not produce real ultraviolet (UV) light.</string>
+
+    <string name="privacy_collect_heading">Data we collect</string>
+    <string name="privacy_collect_body">None. There is no account, no analytics, no ads and no tracking, and no data is shared with anyone.</string>
+
+    <string name="privacy_device_heading">Data stored on your device</string>
+    <string name="privacy_device_body">Your settings, themes and presets are saved only on your phone. They may be included in your Android device backup if you have backup turned on.</string>
+
+    <string name="privacy_camera_heading">Camera</string>
+    <string name="privacy_camera_body">The app only switches the camera LED on and off. It never takes photos or video and does not request the camera permission.</string>
+
+    <string name="privacy_purchases_heading">Purchases</string>
+    <string name="privacy_purchases_body">Premium subscriptions are handled by Google Play. We don\'t see or store your payment details. You can manage or cancel your subscription in Google Play.</string>
+
+    <string name="privacy_children_heading">Children</string>
+    <string name="privacy_children_body">UV Glow is not directed at children under 13, and it collects no data from anyone.</string>
+
+    <string name="privacy_changes_heading">Changes</string>
+    <string name="privacy_changes_body">If anything changes, we\'ll update this page and the date at the top.</string>
+
+    <string name="privacy_contact_heading">Contact</string>
+    <!-- %1$s is AppLinks.CONTACT_EMAIL. -->
+    <string name="privacy_contact_body">Questions about this policy: %1$s</string>
 </resources>

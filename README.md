@@ -54,7 +54,7 @@ If you see "SDK location not found", create `local.properties` with
 | **Themes** | 5 colour swatches + HSV custom picker; built-in themes; create / rename / apply / update / delete custom themes |
 | **Presets** | Save the current look; preview cards; apply, rename and delete; "Active" state |
 | **Auto-off timer** | 1 / 5 / 10 / 30 min; live ring countdown; start, pause, resume and cancel; switches the light (and LED) off when it ends |
-| **Settings** | Reduced motion; optional phone LED; Manage subscription (opens Google Play); replay intro; reset settings (with confirm); About & safety with Privacy policy |
+| **Settings** | Reduced motion; optional phone LED; Manage subscription (opens Google Play); replay intro; reset settings (with confirm); About & safety with an in-app Privacy policy screen |
 | **Premium** | Free vs Premium table; monthly and yearly plans with Play's localised price, billing period and any trial/intro offer; auto-renewal terms; checkout; restore; subscription status; demo preview switch (debug builds only) |
 
 Free plan limits: 4 modes (Strobe and Blacklight are Premium), 5 presets, 1 custom theme.
@@ -116,6 +116,8 @@ com.tubers.blacklight
   flashing-lights warning, release builds ignoring the demo preview)
 - `PlanPricingTest`: offer selection (trial > intro > base plan), billing periods, price and trial wording
 - `AppLinksTest`: Play "Manage subscription" deep link
+- `RoutesTest`: which screens get the back-button header (Timer, Premium, Privacy policy)
+- `PrivacyPolicySyncTest`: the in-app policy (strings.xml) and docs/privacy-policy.md say the same thing
 
 ## Hardware: phone LED
 
@@ -167,8 +169,8 @@ To go live:
       264 px design asset). Android Studio › *New › Image Asset* creates every density.
 - [ ] Billing set up as above. Test a purchase, a free trial, restore and *Manage subscription*
       with licence testers.
-- [ ] **Privacy policy:** fill in the placeholders in `docs/privacy-policy.md` (developer name,
-      date, contact email), publish it at a public https URL, set `AppLinks.PRIVACY_POLICY_URL`
+- [ ] **Privacy policy:** set `AppLinks.CONTACT_EMAIL` and the same address in `docs/privacy-policy.md`
+      (`PrivacyPolicySyncTest` checks the two copies match), publish the page at a public https URL, set `AppLinks.PRIVACY_POLICY_URL`
       to that URL, and enter the same URL in Play Console › App content › Privacy policy.
 - [ ] **Data safety form:** "No data collected" and "No data shared". Settings stay on the device
       (and in Android backup); purchases are processed by Google Play. Check this still holds
