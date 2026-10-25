@@ -129,16 +129,29 @@ fun SettingsScreen(state: StudioUiState, vm: StudioViewModel, onReplayIntro: () 
             val rotation by animateFloatAsState(if (showAbout) 90f else 0f, label = "about")
             NavRow(UvIcons.Info, "About & safety", "Version ${BuildConfig.VERSION_NAME}", { showAbout = !showAbout }, trailingRotation = rotation)
             AnimatedVisibility(showAbout) {
-                Text(
-                    "UV Glow draws light effects on your screen. A phone screen can't emit ultraviolet light, " +
-                        "so the app can't reveal stains, check banknotes or disinfect anything. The optional LED is an " +
-                        "ordinary white camera flash. For real UV work, use certified UV hardware and never look " +
-                        "straight into the source.",
-                    fontSize = 12.sp,
-                    lineHeight = 18.sp,
-                    color = UvColors.TextBody,
-                    modifier = Modifier.padding(bottom = 12.dp),
-                )
+                Column {
+                    Text(
+                        "UV Glow draws light effects on your screen. A phone screen can't emit ultraviolet light, " +
+                            "so the app can't reveal stains, check banknotes or disinfect anything. The optional LED is an " +
+                            "ordinary white camera flash. For real UV work, use certified UV hardware and never look " +
+                            "straight into the source.",
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp,
+                        color = UvColors.TextBody,
+                        modifier = Modifier.padding(bottom = 12.dp),
+                    )
+                    HorizontalDivider(color = UvColors.Divider)
+                    NavRow(
+                        UvIcons.Shield,
+                        "Privacy policy",
+                        "No personal data collected or shared",
+                        {
+                            if (!context.openExternal(AppLinks.PRIVACY_POLICY_URL)) {
+                                vm.showMessage("Couldn’t open the privacy policy")
+                            }
+                        },
+                    )
+                }
             }
         }
     }
