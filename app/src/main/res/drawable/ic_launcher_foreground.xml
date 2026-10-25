@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive icon foreground, redrawn from docs/icon-512.png (512-unit artwork coordinates).
+     The 672-unit viewport scales the art so its farthest point (~200 units from the art's centre)
+     stays inside the 66dp safe circle of the 108dp canvas: 200 / 336 * 108dp ≈ 64dp diameter. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="672"
+    android:viewportHeight="672">
+    <!-- Art centre (256, 247) → canvas centre (336, 336). -->
+    <group android:translateX="80" android:translateY="89">
+        <!-- Beams -->
+        <path
+            android:fillColor="#8C58CE"
+            android:pathData="M233,74 A23,23 0 0 1 279,74 L279,210 Q279,213 276,213 L236,213 Q233,213 233,210 Z" />
+        <group android:pivotX="131" android:pivotY="125" android:rotation="-34.4">
+            <path
+                android:fillColor="#8C58CE"
+                android:pathData="M108,125 A23,23 0 0 1 154,125 L154,245 Q154,248 151,248 L111,248 Q108,248 108,245 Z" />
+        </group>
+        <group android:pivotX="381" android:pivotY="125" android:rotation="34.4">
+            <path
+                android:fillColor="#8C58CE"
+                android:pathData="M358,125 A23,23 0 0 1 404,125 L404,245 Q404,248 401,248 L361,248 Q358,248 358,245 Z" />
+        </group>
+        <!-- Flashlight head and body -->
+        <path
+            android:fillColor="#F3F2F2"
+            android:pathData="M180,252 L332,252 L300,315 L296,315 L296,433 Q296,443 286,443 L226,443 Q216,443 216,433 L216,315 L212,315 Z" />
+        <!-- Switch dot -->
+        <path
+            android:fillColor="#8C58CE"
+            android:pathData="M239,371 A17,17 0 1 0 273,371 A17,17 0 1 0 239,371 Z" />
+    </group>
+</vector>

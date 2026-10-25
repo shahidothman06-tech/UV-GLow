@@ -171,8 +171,9 @@ To go live:
 
 - [ ] Create an upload keystore and add a `signingConfig` for `release` (never commit the keystore).
 - [ ] Bump `versionCode` / `versionName` in `app/build.gradle.kts`.
-- [ ] Replace launcher icons with a high-resolution export (the included icons are generated from the
-      264 px design asset). Android Studio › *New › Image Asset* creates every density.
+- [x] Launcher icon: vector adaptive icon (`drawable/ic_launcher_foreground.xml`, dark background,
+      `ic_launcher_monochrome.xml` for themed icons) redrawn from `docs/icon-512.png`, artwork inside
+      the 66dp safe zone. Upload `docs/icon-512.png` as the Play Store icon (512 × 512 PNG).
 - [ ] Billing set up as above. Test a purchase, a free trial, restore and *Manage subscription*
       with licence testers.
 - [ ] **Privacy policy:** published by GitHub Pages (Settings › Pages › Deploy from a branch ›

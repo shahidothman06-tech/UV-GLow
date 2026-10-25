@@ -12,6 +12,8 @@
     <style name="Theme.UVGlow.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/uv_ground</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <!-- Same dark disc as the launcher icon behind the splash artwork. -->
+        <item name="windowSplashScreenIconBackgroundColor">@color/uv_icon_background</item>
         <item name="postSplashScreenTheme">@style/Theme.UVGlow</item>
     </style>
 </resources>

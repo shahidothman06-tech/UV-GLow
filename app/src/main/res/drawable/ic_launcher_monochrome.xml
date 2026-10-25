@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon (Android 13+) layer: the foreground's shapes in one colour; the system tints it.
+     The switch dot is cut out of the body (evenOdd) so it still reads without the purple. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="672"
+    android:viewportHeight="672">
+    <group android:translateX="80" android:translateY="89">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M233,74 A23,23 0 0 1 279,74 L279,210 Q279,213 276,213 L236,213 Q233,213 233,210 Z" />
+        <group android:pivotX="131" android:pivotY="125" android:rotation="-34.4">
+            <path
+                android:fillColor="#FFFFFFFF"
+                android:pathData="M108,125 A23,23 0 0 1 154,125 L154,245 Q154,248 151,248 L111,248 Q108,248 108,245 Z" />
+        </group>
+        <group android:pivotX="381" android:pivotY="125" android:rotation="34.4">
+            <path
+                android:fillColor="#FFFFFFFF"
+                android:pathData="M358,125 A23,23 0 0 1 404,125 L404,245 Q404,248 401,248 L361,248 Q358,248 358,245 Z" />
+        </group>
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M180,252 L332,252 L300,315 L296,315 L296,433 Q296,443 286,443 L226,443 Q216,443 216,433 L216,315 L212,315 Z M239,371 A17,17 0 1 0 273,371 A17,17 0 1 0 239,371 Z" />
+    </group>
+</vector>

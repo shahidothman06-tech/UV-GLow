@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- In-app logo (header, welcome and Premium screens): the full icon, background included, at the
+     original 512-unit coordinates of docs/icon-512.png. Screens clip it to a rounded square. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <path android:fillColor="#201E1D" android:pathData="M0,0 L512,0 L512,512 L0,512 Z" />
+    <path
+        android:fillColor="#8C58CE"
+        android:pathData="M233,74 A23,23 0 0 1 279,74 L279,210 Q279,213 276,213 L236,213 Q233,213 233,210 Z" />
+    <group android:pivotX="131" android:pivotY="125" android:rotation="-34.4">
+        <path
+            android:fillColor="#8C58CE"
+            android:pathData="M108,125 A23,23 0 0 1 154,125 L154,245 Q154,248 151,248 L111,248 Q108,248 108,245 Z" />
+    </group>
+    <group android:pivotX="381" android:pivotY="125" android:rotation="34.4">
+        <path
+            android:fillColor="#8C58CE"
+            android:pathData="M358,125 A23,23 0 0 1 404,125 L404,245 Q404,248 401,248 L361,248 Q358,248 358,245 Z" />
+    </group>
+    <path
+        android:fillColor="#F3F2F2"
+        android:pathData="M180,252 L332,252 L300,315 L296,315 L296,433 Q296,443 286,443 L226,443 Q216,443 216,433 L216,315 L212,315 Z" />
+    <path
+        android:fillColor="#8C58CE"
+        android:pathData="M239,371 A17,17 0 1 0 273,371 A17,17 0 1 0 239,371 Z" />
+</vector>
