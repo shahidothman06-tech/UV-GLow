@@ -1,6 +1,8 @@
 package com.tubers.blacklight.ui.state
 
 import android.app.Activity
+import com.tubers.blacklight.ads.AdsGateway
+import com.tubers.blacklight.ads.AdsStatus
 import com.tubers.blacklight.billing.BillingGateway
 import com.tubers.blacklight.billing.BillingStatus
 import com.tubers.blacklight.billing.PlanType
@@ -70,4 +72,12 @@ class FakeBilling : BillingGateway {
     override fun connect() = Unit
     override suspend fun purchase(activity: Activity, plan: PlanType): PurchaseOutcome = PurchaseOutcome.NotConfigured
     override suspend fun restore(): RestoreOutcome = RestoreOutcome.NotConfigured
+}
+
+class FakeAds(initial: AdsStatus = AdsStatus()) : AdsGateway {
+    override val status = MutableStateFlow(initial)
+    override val bannerAdUnitId = "test-banner"
+    var consentRequests = 0
+    override fun gatherConsent(activity: Activity) { consentRequests++ }
+    override fun showPrivacyOptions(activity: Activity, onDone: (String?) -> Unit) = onDone(null)
 }

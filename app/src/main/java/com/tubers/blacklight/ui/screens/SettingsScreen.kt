@@ -37,6 +37,7 @@ import com.tubers.blacklight.ui.components.SectionLabel
 import com.tubers.blacklight.ui.components.SwitchRow
 import com.tubers.blacklight.ui.components.UvIcons
 import com.tubers.blacklight.ui.components.UvPanel
+import com.tubers.blacklight.ui.components.findActivity
 import com.tubers.blacklight.ui.components.openExternal
 import com.tubers.blacklight.ui.components.readableWidth
 import com.tubers.blacklight.ui.components.verticalFadeEdges
@@ -147,9 +148,19 @@ fun SettingsScreen(state: StudioUiState, vm: StudioViewModel, onReplayIntro: () 
                     NavRow(
                         UvIcons.Shield,
                         "Privacy policy",
-                        "No personal data collected or shared",
+                        "What the app stores and how ads use data",
                         onOpenPrivacy,
                     )
+                    // Required by Google's consent rules wherever the consent form applies (EEA, UK, Switzerland).
+                    if (state.ads.privacyOptionsRequired) {
+                        HorizontalDivider(color = UvColors.Divider)
+                        NavRow(
+                            UvIcons.Info,
+                            "Privacy & ad choices",
+                            "Change your consent for personalised ads",
+                            { context.findActivity()?.let(vm::openAdChoices) },
+                        )
+                    }
                 }
             }
         }

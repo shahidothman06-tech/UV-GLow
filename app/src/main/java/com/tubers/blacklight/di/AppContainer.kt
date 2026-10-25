@@ -2,6 +2,8 @@ package com.tubers.blacklight.di
 
 import android.content.Context
 import com.tubers.blacklight.BuildConfig
+import com.tubers.blacklight.ads.AdsGateway
+import com.tubers.blacklight.ads.GoogleAdsGateway
 import com.tubers.blacklight.billing.BillingGateway
 import com.tubers.blacklight.billing.PlayBillingGateway
 import com.tubers.blacklight.data.db.UvGlowDatabase
@@ -33,4 +35,5 @@ class AppContainer(context: Context) {
     val billingGateway: BillingGateway by lazy {
         PlayBillingGateway(appContext, BuildConfig.BILLING_MONTHLY_ID, BuildConfig.BILLING_YEARLY_ID, appScope)
     }
+    val adsGateway: AdsGateway by lazy { GoogleAdsGateway(appContext, BuildConfig.ADMOB_BANNER_ID, appScope) }
 }

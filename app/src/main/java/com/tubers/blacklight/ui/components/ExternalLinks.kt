@@ -1,7 +1,9 @@
 package com.tubers.blacklight.ui.components
 
+import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
 
@@ -17,4 +19,11 @@ fun Context.openExternal(url: String): Boolean {
     } catch (_: ActivityNotFoundException) {
         false
     }
+}
+
+/** The Activity behind a Compose [Context], needed by Play Billing and Google's consent forms. */
+tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

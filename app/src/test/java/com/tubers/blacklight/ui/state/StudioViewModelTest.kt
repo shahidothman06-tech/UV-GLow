@@ -1,5 +1,6 @@
 package com.tubers.blacklight.ui.state
 
+import com.tubers.blacklight.ads.AdsStatus
 import com.tubers.blacklight.domain.model.LightMode
 import com.tubers.blacklight.domain.model.LightSettings
 import com.tubers.blacklight.domain.model.TimerStatus
@@ -80,6 +81,58 @@ class StudioViewModelTest {
         assertTrue(firstLoaded.prefs.reducedMotion)
         assertEquals(33, firstLoaded.light.brightness)
         collector.cancel()
+    }
+
+    @Test
+    fun noBannerWhileLightActive_andItReturnsWhenTheLightGoesOff() = runTest(dispatcher) {
+        val ads = FakeAds(AdsStatus(configured = true, canRequestAds = true, initialized = true))
+        settings.lightFlow.value = LightSettings(isOn = true, mode = LightMode.UV_GLOW)
+        val vm = StudioViewModel(settings, presets, themes, torch, FakeBilling(), ads = ads, clock = { testScheduler.currentTime })
+        runCurrent()
+        assertFalse("light on: no banner on any ad screen", vm.uiState.value.bannerAllowed(screenAllowsBanner = true))
+
+        vm.togglePower()
+        runCurrent()
+        assertTrue("light off on an ad screen", vm.uiState.value.bannerAllowed(screenAllowsBanner = true))
+        assertFalse("never on Home", vm.uiState.value.bannerAllowed(screenAllowsBanner = false))
+
+        vm.togglePower()
+        runCurrent()
+        assertFalse(vm.uiState.value.bannerAllowed(screenAllowsBanner = true))
+    }
+
+    @Test
+    fun noBannerWithoutConsent_untilGoogleAllowsAds() = runTest(dispatcher) {
+        val ads = FakeAds(AdsStatus(configured = true, canRequestAds = false))
+        settings.lightFlow.value = LightSettings(isOn = false)
+        val vm = StudioViewModel(settings, presets, themes, torch, FakeBilling(), ads = ads, clock = { testScheduler.currentTime })
+        runCurrent()
+        assertFalse("no consent yet", vm.uiState.value.bannerAllowed(screenAllowsBanner = true))
+
+        ads.status.value = ads.status.value.copy(canRequestAds = true)
+        runCurrent()
+        assertFalse("consent alone: SDK not initialised yet", vm.uiState.value.bannerAllowed(screenAllowsBanner = true))
+
+        ads.status.value = ads.status.value.copy(initialized = true)
+        runCurrent()
+        assertTrue(vm.uiState.value.bannerAllowed(screenAllowsBanner = true))
+    }
+
+    @Test
+    fun adsNeverChangeTheLight() = runTest(dispatcher) {
+        // Consent and ad state changes must not touch mode, speed or reduced motion (strobe cap safety).
+        val ads = FakeAds()
+        settings.lightFlow.value = LightSettings(isOn = false, mode = LightMode.SOS, speedTenths = 20)
+        settings.prefsFlow.value = settings.prefsFlow.value.copy(reducedMotion = true, flashWarningAccepted = true)
+        val vm = StudioViewModel(settings, presets, themes, torch, FakeBilling(), ads = ads, clock = { testScheduler.currentTime })
+        runCurrent()
+        val before = vm.uiState.value
+        ads.status.value = AdsStatus(configured = true, canRequestAds = true, initialized = true, privacyOptionsRequired = true)
+        runCurrent()
+        val after = vm.uiState.value
+        assertEquals(before.light, after.light)
+        assertEquals(before.prefs, after.prefs)
+        assertTrue(after.ads.privacyOptionsRequired)
     }
 
     @Test

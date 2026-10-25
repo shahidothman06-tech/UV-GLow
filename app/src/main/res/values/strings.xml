@@ -3,32 +3,36 @@
     <string name="app_name">UV Glow</string>
 
     <!-- Privacy policy screen (Settings › About & safety › Privacy policy).
-         Keep docs/privacy-policy.md in sync: it is the public copy linked from Google Play. -->
-    <string name="privacy_title">Privacy policy</string>
+         Keep docs/privacy-policy.md in sync: it is the public copy linked from Google Play.
+         PrivacyPolicySyncTest checks that every privacy_* string appears there. -->
+    <string name="privacy_title">UV Glow – Privacy Policy</string>
     <string name="privacy_last_updated">Last updated: 25 October 2026</string>
 
     <string name="privacy_what_heading">What the app does</string>
-    <string name="privacy_what_body">UV Glow shows a violet light effect on your screen and can switch on your phone\'s normal white camera LED. It does not produce real ultraviolet (UV) light.</string>
+    <string name="privacy_what_body">UV Glow shows a violet light effect on your screen and can switch on your phone\'s normal white flashlight LED. It does not produce real ultraviolet (UV) light.</string>
 
-    <string name="privacy_collect_heading">Data we collect</string>
-    <string name="privacy_collect_body">None. There is no account, no analytics, no ads and no tracking, and no data is shared with anyone.</string>
+    <string name="privacy_device_heading">Information stored on your device</string>
+    <string name="privacy_device_body">your settings, themes and presets are saved only on your phone and may be included in your Android device backup. We do not receive this information.</string>
 
-    <string name="privacy_device_heading">Data stored on your device</string>
-    <string name="privacy_device_body">Your settings, themes and presets are saved only on your phone. They may be included in your Android device backup if you have backup turned on.</string>
+    <string name="privacy_ads_heading">Advertising</string>
+    <string name="privacy_ads_body">the app shows ads provided by Google AdMob. AdMob may collect and use your device\'s advertising ID, IP address, approximate location, device and app information and ad interactions to show and measure ads and prevent fraud. In the EEA, UK and Switzerland you are asked for consent first, and you can change your choice in Settings › Privacy &amp; ad choices. You can reset your advertising ID or opt out of personalised ads in your Android settings. How Google uses information: https://policies.google.com/technologies/partner-sites</string>
 
-    <string name="privacy_camera_heading">Camera</string>
-    <string name="privacy_camera_body">The app only switches the camera LED on and off. It never takes photos or video and does not request the camera permission.</string>
+    <string name="privacy_camera_heading">Camera and flashlight</string>
+    <string name="privacy_camera_body">the app only turns the flashlight LED on and off. It never takes photos or video.</string>
 
     <string name="privacy_purchases_heading">Purchases</string>
-    <string name="privacy_purchases_body">Premium subscriptions are handled by Google Play. We don\'t see or store your payment details. You can manage or cancel your subscription in Google Play.</string>
+    <string name="privacy_purchases_body">a future version may offer Premium through Google Play. Payments are handled by Google Play, and we never see your payment details.</string>
 
     <string name="privacy_children_heading">Children</string>
-    <string name="privacy_children_body">UV Glow is not directed at children under 13, and it collects no data from anyone.</string>
+    <string name="privacy_children_body">the app is not directed at children under 13.</string>
+
+    <string name="privacy_sharing_heading">Data sharing</string>
+    <string name="privacy_sharing_body">we do not sell personal information. Apart from the advertising data collected by Google AdMob, the app does not collect or share personal data.</string>
 
     <string name="privacy_changes_heading">Changes</string>
-    <string name="privacy_changes_body">If anything changes, we\'ll update this page and the date at the top.</string>
+    <string name="privacy_changes_body">if this policy changes, we will update this page and the date.</string>
 
     <string name="privacy_contact_heading">Contact</string>
     <!-- %1$s is AppLinks.CONTACT_EMAIL. -->
-    <string name="privacy_contact_body">Questions about this policy: %1$s</string>
+    <string name="privacy_contact_body">%1$s</string>
 </resources>

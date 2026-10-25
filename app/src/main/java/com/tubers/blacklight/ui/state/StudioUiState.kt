@@ -1,6 +1,8 @@
 package com.tubers.blacklight.ui.state
 
 import com.tubers.blacklight.BuildConfig
+import com.tubers.blacklight.ads.AdPolicy
+import com.tubers.blacklight.ads.AdsStatus
 import com.tubers.blacklight.billing.BillingStatus
 import com.tubers.blacklight.domain.model.AppPreferences
 import com.tubers.blacklight.domain.model.BuiltInThemes
@@ -21,6 +23,7 @@ data class StudioUiState(
     val torchAvailable: Boolean = false,
     val torchOn: Boolean = false,
     val billing: BillingStatus = BillingStatus(),
+    val ads: AdsStatus = AdsStatus(),
     /** Demo checkout and "Preview Premium (demo)" exist only in debug builds. */
     val demoAllowed: Boolean = BuildConfig.DEBUG,
     /**
@@ -37,6 +40,9 @@ data class StudioUiState(
     /** Premium is unlocked by a real subscription, or (debug builds only) by the labelled demo preview. */
     val isPremium: Boolean get() = billing.hasActiveSubscription || (demoAllowed && prefs.premiumPreview)
     val themes: List<ThemeItem> get() = BuiltInThemes.all + customThemes
+
+    /** Whether a banner may show on a screen that allows one ([AdPolicy]: light off, consent, SDK ready). */
+    fun bannerAllowed(screenAllowsBanner: Boolean): Boolean = AdPolicy.bannerAllowed(screenAllowsBanner, light, ads)
 }
 
 /** One-off events for the UI (snackbars, navigation). */

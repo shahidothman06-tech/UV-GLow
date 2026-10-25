@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -39,6 +40,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.tubers.blacklight.ads.AdaptiveBanner
 import com.tubers.blacklight.ui.components.BottomNav
 import com.tubers.blacklight.ui.components.FlashWarningDialog
 import com.tubers.blacklight.ui.components.NavItem
@@ -78,6 +80,9 @@ object Routes {
      * Header title for screens opened on top of a tab (they get a back button and no tab is
      * highlighted), or null for the tabs themselves and the intro.
      */
+    /** Screens with a banner slot at the bottom. Never Home, the intro or the sub-screens. */
+    fun showsBanner(route: String?): Boolean = route in setOf(EFFECTS, THEMES, PRESETS, SETTINGS)
+
     fun subScreenTitle(route: String?): String? = when (route) {
         TIMER -> "Auto-off timer"
         PREMIUM -> "Premium"
@@ -187,8 +192,20 @@ fun UvGlowRoot(vm: StudioViewModel) {
                         }
                     },
                     bottomBar = {
-                        if (showChrome && !useRail) {
-                            BottomNav(Tabs, selectedRoute = if (isSubScreen) null else route, onSelect = { nav.openTab(it.route) })
+                        // The banner sits in the bottom bar slot, above the tabs, so the Scaffold
+                        // pads content above it: it never covers controls.
+                        val showBanner = state.bannerAllowed(Routes.showsBanner(route))
+                        Column {
+                            if (showBanner) {
+                                AdaptiveBanner(
+                                    vm.adUnitId, UvColors.NavBackground,
+                                    // With the side rail there's no tab bar below to clear the gesture bar.
+                                    if (useRail) Modifier.windowInsetsPadding(WindowInsets.navigationBars) else Modifier,
+                                )
+                            }
+                            if (showChrome && !useRail) {
+                                BottomNav(Tabs, selectedRoute = if (isSubScreen) null else route, onSelect = { nav.openTab(it.route) })
+                            }
                         }
                     },
                     snackbarHost = {
@@ -232,7 +249,7 @@ fun UvGlowRoot(vm: StudioViewModel) {
                         composable(Routes.PRIVACY) {
                             PrivacyPolicyScreen(
                                 onBack = { nav.popBackStack() },
-                                onEmailFailed = { vm.showMessage("No email app found") },
+                                onLinkFailed = { vm.showMessage("No app found to open that link") },
                             )
                         }
                         composable(Routes.INTRO) {

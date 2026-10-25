@@ -8,6 +8,13 @@ plugins {
 val monthlyProductId: String = (findProperty("uvglow.billing.monthlyProductId") as String?).orEmpty()
 val yearlyProductId: String = (findProperty("uvglow.billing.yearlyProductId") as String?).orEmpty()
 
+// AdMob IDs for release builds come from gradle.properties (ADMOB_APP_ID, ADMOB_BANNER_ID).
+// Debug builds always use Google's official test IDs, so real ads are never loaded while testing.
+val admobAppId: String = (findProperty("ADMOB_APP_ID") as String?).orEmpty().trim()
+val admobBannerId: String = (findProperty("ADMOB_BANNER_ID") as String?).orEmpty().trim()
+val testAdmobAppId = "ca-app-pub-3940256099942544~3347511713"
+val testAdmobBannerId = "ca-app-pub-3940256099942544/6300978111"
+
 android {
     namespace = "com.tubers.blacklight"
     compileSdk = 36
@@ -35,9 +42,19 @@ android {
                 "proguard-rules.pro"
             )
             // Configure a real signingConfig before publishing (see README).
+
+            // A blank banner ID turns ads off (no consent request, no SDK init, no banner). The
+            // manifest still needs *some* app ID or the Ads SDK stops the app at launch, so a blank
+            // ADMOB_APP_ID falls back to the test app ID, which loads nothing when ads are off.
+            manifestPlaceholders["admobAppId"] = admobAppId.ifBlank { testAdmobAppId }
+            buildConfigField("String", "ADMOB_APP_ID", "\"$admobAppId\"")
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"${if (admobAppId.isBlank()) "" else admobBannerId}\"")
         }
         debug {
             versionNameSuffix = "-debug"
+            manifestPlaceholders["admobAppId"] = testAdmobAppId
+            buildConfigField("String", "ADMOB_APP_ID", "\"$testAdmobAppId\"")
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"$testAdmobBannerId\"")
         }
     }
 
@@ -88,6 +105,8 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.billing.ktx)
+    implementation(libs.play.services.ads)
+    implementation(libs.ump)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

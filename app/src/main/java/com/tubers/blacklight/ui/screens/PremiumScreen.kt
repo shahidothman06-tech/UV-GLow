@@ -1,8 +1,5 @@
 package com.tubers.blacklight.ui.screens
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -57,6 +54,7 @@ import com.tubers.blacklight.ui.components.SectionLabel
 import com.tubers.blacklight.ui.components.SwitchRow
 import com.tubers.blacklight.ui.components.UvIcons
 import com.tubers.blacklight.ui.components.UvPanel
+import com.tubers.blacklight.ui.components.findActivity
 import com.tubers.blacklight.ui.components.readableWidth
 import com.tubers.blacklight.ui.components.verticalFadeEdges
 import com.tubers.blacklight.ui.state.StudioUiState
@@ -65,12 +63,6 @@ import com.tubers.blacklight.ui.theme.LocalAccent
 import com.tubers.blacklight.ui.theme.UvColors
 import com.tubers.blacklight.ui.theme.UvRadius
 import com.tubers.blacklight.ui.theme.UvType
-
-private tailrec fun Context.findActivity(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
-}
 
 @Composable
 fun PremiumScreen(state: StudioUiState, vm: StudioViewModel) {

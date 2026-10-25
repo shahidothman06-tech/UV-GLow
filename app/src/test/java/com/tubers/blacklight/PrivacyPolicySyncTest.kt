@@ -31,6 +31,11 @@ class PrivacyPolicySyncTest {
             }
     }
 
+    @Test fun titleMatches() {
+        val title = privacyStrings.getValue("privacy_title")
+        assertTrue("docs/privacy-policy.md should start with \"# $title\"", markdown.startsWith("# $title"))
+    }
+
     @Test fun lastUpdatedDateMatches() {
         val date = privacyStrings.getValue("privacy_last_updated").removePrefix("Last updated: ")
         assertTrue("docs/privacy-policy.md has a different date than strings.xml ($date)", "Last updated: $date" in markdown)

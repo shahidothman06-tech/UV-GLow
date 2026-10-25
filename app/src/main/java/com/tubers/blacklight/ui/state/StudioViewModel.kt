@@ -10,7 +10,11 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.tubers.blacklight.BuildConfig
 import com.tubers.blacklight.UvGlowApp
+import com.tubers.blacklight.ads.AdsGateway
+import com.tubers.blacklight.ads.AdsStatus
+import com.tubers.blacklight.ads.NoAdsGateway
 import com.tubers.blacklight.billing.BillingGateway
+import com.tubers.blacklight.billing.BillingStatus
 import com.tubers.blacklight.billing.PlanType
 import com.tubers.blacklight.billing.PurchaseOutcome
 import com.tubers.blacklight.billing.RestoreOutcome
@@ -61,6 +65,8 @@ class StudioViewModel(
     private val themeRepo: ThemeRepository,
     private val torch: TorchController,
     private val billing: BillingGateway,
+    /** AdMob; defaults to no ads so tests and ad-free builds need nothing. */
+    private val ads: AdsGateway = NoAdsGateway,
     private val clock: () -> Long = { SystemClock.elapsedRealtime() },
     private val persistDelayMs: Long = 250L,
     /** Demo checkout and the Premium preview switch; never available in release builds. */
@@ -82,6 +88,8 @@ class StudioViewModel(
     private var timerJob: Job? = null
     private var weTurnedTorchOn = false
 
+    private data class Services(val torchOn: Boolean, val billing: BillingStatus, val ads: AdsStatus)
+
     private data class Core(
         val light: LightSettings,
         val prefs: AppPreferences,
@@ -95,11 +103,10 @@ class StudioViewModel(
             combine(light, prefs, presetRepo.presets, themeRepo.customThemes, timer) { l, p, pr, th, t ->
                 Core(l, p, pr, th, t)
             },
-            torch.isTorchOn,
-            billing.status,
+            combine(torch.isTorchOn, billing.status, ads.status, ::Services),
             loaded,
             pendingFlash,
-        ) { core, torchOn, billingStatus, _, _ ->
+        ) { core, services, _, _ ->
             // The combines above only signal that something changed. In-memory state is read
             // directly so a snapshot can never pair loaded = true with not-yet-restored
             // preferences (the start screen is chosen from the first loaded snapshot).
@@ -111,8 +118,9 @@ class StudioViewModel(
                 customThemes = core.themes,
                 timer = timer.value,
                 torchAvailable = torch.isAvailable,
-                torchOn = torchOn,
-                billing = billingStatus,
+                torchOn = services.torchOn,
+                billing = services.billing,
+                ads = services.ads,
                 demoAllowed = demoAllowed,
                 premiumVisible = premiumVisible,
                 flashWarningFor = pendingFlash.value?.mode,
@@ -408,6 +416,19 @@ class StudioViewModel(
         }
     }
 
+    // ---------------------------------------------------------------- ads
+
+    /** Ad unit for the banner: Google's test ID in debug builds. */
+    val adUnitId: String get() = ads.bannerAdUnitId
+
+    /** Google's consent check, then ads start if allowed. Called by the activity on launch. */
+    fun gatherAdConsent(activity: Activity) = ads.gatherConsent(activity)
+
+    /** Settings › About & safety › Privacy & ad choices. */
+    fun openAdChoices(activity: Activity) {
+        ads.showPrivacyOptions(activity) { error -> if (error != null) message("Couldn’t open ad choices") }
+    }
+
     // ---------------------------------------------------------------- hardware
 
     /** Keeps the camera LED in step with the light when the user opted in. */
@@ -443,6 +464,7 @@ class StudioViewModel(
                     themeRepo = c.themeRepository,
                     torch = c.torchController,
                     billing = c.billingGateway,
+                    ads = c.adsGateway,
                 )
             }
         }

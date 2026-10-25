@@ -28,5 +28,8 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent { UvGlowRoot(viewModel) }
+
+        // Ad consent (Google UMP) once per launch, not on every rotation; ads start only if allowed.
+        if (savedInstanceState == null) viewModel.gatherAdConsent(this)
     }
 }

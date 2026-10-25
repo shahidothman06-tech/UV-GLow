@@ -54,10 +54,14 @@ If you see "SDK location not found", create `local.properties` with
 | **Themes** | 5 colour swatches + HSV custom picker; built-in themes; create / rename / apply / update / delete custom themes |
 | **Presets** | Save the current look; preview cards; apply, rename and delete; "Active" state |
 | **Auto-off timer** | 1 / 5 / 10 / 30 min; live ring countdown; start, pause, resume and cancel; switches the light (and LED) off when it ends |
-| **Settings** | Reduced motion; optional phone LED; Manage subscription (opens Google Play); replay intro; reset settings (with confirm); About & safety with an in-app Privacy policy screen |
+| **Settings** | Reduced motion; optional phone LED; Manage subscription (opens Google Play); replay intro; reset settings (with confirm); About & safety with an in-app Privacy policy screen and "Privacy & ad choices" (where consent applies) |
 | **Premium** | Free vs Premium table; monthly and yearly plans with Play's localised price, billing period and any trial/intro offer; auto-renewal terms; checkout; restore; subscription status; demo preview switch (debug builds only) |
 
 Free plan limits: 4 modes (Strobe and Blacklight are Premium), 5 presets, 1 custom theme.
+
+**Ads:** one adaptive AdMob banner at the bottom of Effects, Themes, Presets and Settings, only
+while the light is off and after Google's consent check (UMP) allows ads. Never on Home, never
+over controls, no interstitial or rewarded ads. Debug builds use Google's test IDs.
 
 Every screen adapts to landscape, tablets, foldables and resizable windows: a side navigation rail
 in landscape, a two-pane Home with a flashlight stage that scales to fit, and content capped at a
@@ -80,6 +84,7 @@ com.tubers.blacklight
 │   ├── db/                          Room: presets + custom themes (seeded with 3 examples)
 │   └── repo/                        Room-backed repositories
 ├── hardware/                        TorchController (camera LED via CameraManager)
+├── ads/                             AdsGateway + GoogleAdsGateway (AdMob + UMP consent), AdPolicy, AdaptiveBanner
 ├── billing/                         BillingGateway + PlayBillingGateway (Play Billing 9.1), PlanPricing
 └── ui/
     ├── state/                       StudioViewModel — the single source of UI state
@@ -116,6 +121,7 @@ com.tubers.blacklight
   flashing-lights warning, release builds ignoring the demo preview)
 - `PlanPricingTest`: offer selection (trial > intro > base plan), billing periods, price and trial wording
 - `AppLinksTest`: Play "Manage subscription" deep link
+- `AdPolicyTest`: no banner while the light is on (any mode), without consent, before the SDK is ready, or on Home
 - `RoutesTest`: which screens get the back-button header (Timer, Premium, Privacy policy)
 - `PrivacyPolicySyncTest`: the in-app policy (strings.xml) and docs/privacy-policy.md say the same thing
 
@@ -173,9 +179,21 @@ To go live:
       `main` › `/docs`) at https://shahidothman06-tech.github.io/UV-GLow/privacy-policy (=
       `AppLinks.PRIVACY_POLICY_URL`). Enter that URL in Play Console › App content › Privacy policy.
       Edit `strings.xml` and `docs/privacy-policy.md` together; `PrivacyPolicySyncTest` checks they match.
-- [ ] **Data safety form:** "No data collected" and "No data shared". Settings stay on the device
-      (and in Android backup); purchases are processed by Google Play. Check this still holds
-      if you add any SDK.
+- [ ] **AdMob IDs:** create the app and an adaptive banner ad unit in AdMob, then set `ADMOB_APP_ID`
+      and `ADMOB_BANNER_ID` in `gradle.properties` (release only; debug always uses Google's test
+      IDs). With either blank, the release build ships with no ads and doesn't crash.
+- [ ] AdMob › Privacy & messaging: publish a **GDPR (EEA, UK, Switzerland) consent message** for
+      the app; the app's UMP flow shows it before any ad loads.
+- [ ] Play Console › App content › **Ads: "Yes, my app contains ads"**.
+- [ ] Play Console › App content › **Advertising ID**: declare it is used for advertising.
+- [ ] **Data safety form:** data is **collected and shared** for **Advertising or marketing** (and
+      fraud prevention) by the AdMob SDK: **Device or other IDs** (advertising ID) and
+      **Approximate location** (from IP address); also App interactions and diagnostics if AdMob's
+      current Data safety guidance lists them. Not collected: settings, presets and themes (on device
+      only). Purchases are processed by Google Play.
+- [ ] **app-ads.txt:** add your developer website in Play Console (store listing contact details)
+      and publish `app-ads.txt` at its root with the line AdMob gives you
+      (`google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0`).
 - [ ] Content rating questionnaire: mention the optional flashing (Strobe/SOS) effects.
 - [ ] Optional: bundle the design's fonts (Sora, JetBrains Mono) under `res/font` and set them in
       `ui/theme/Theme.kt` (the app uses the system sans-serif and monospace today).
