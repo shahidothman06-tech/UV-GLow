@@ -1,5 +1,6 @@
 package com.tubers.blacklight.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +45,8 @@ fun SettingsScreen(state: StudioUiState, vm: StudioViewModel, onReplayIntro: () 
     var confirmReset by rememberSaveable { mutableStateOf(false) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
     val groupPadding = PaddingValues(horizontal = 14.dp, vertical = 2.dp)
+    // Back (including predictive back) closes the inline confirmation before leaving the tab.
+    BackHandler(enabled = confirmReset) { confirmReset = false }
 
     Column(
         Modifier
