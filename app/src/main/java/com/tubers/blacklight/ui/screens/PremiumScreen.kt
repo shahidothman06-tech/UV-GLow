@@ -74,8 +74,8 @@ fun PremiumScreen(state: StudioUiState, vm: StudioViewModel) {
     var plan by rememberSaveable { mutableStateOf(PlanType.YEARLY) }
     val billing = state.billing
     val demo = !billing.configured
-    val monthlyPrice = billing.prices[PlanType.MONTHLY] ?: "$2.99"
-    val yearlyPrice = billing.prices[PlanType.YEARLY] ?: "$19.99"
+    val monthlyPrice = billing.plans[PlanType.MONTHLY]?.recurring?.formattedPrice ?: "$2.99"
+    val yearlyPrice = billing.plans[PlanType.YEARLY]?.recurring?.formattedPrice ?: "$19.99"
 
     Column(
         Modifier
