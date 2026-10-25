@@ -36,6 +36,8 @@ data class AppPreferences(
     /** Demo-only unlock. Never treated as a real purchase. */
     val premiumPreview: Boolean = false,
     val introSeen: Boolean = false,
+    /** The user has read and accepted the flashing-lights / photosensitive epilepsy warning. */
+    val flashWarningAccepted: Boolean = false,
 )
 
 /** The five built-in light colors. */

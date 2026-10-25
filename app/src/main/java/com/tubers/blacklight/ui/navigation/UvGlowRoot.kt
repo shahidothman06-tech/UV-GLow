@@ -40,6 +40,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.tubers.blacklight.ui.components.BottomNav
+import com.tubers.blacklight.ui.components.FlashWarningDialog
 import com.tubers.blacklight.ui.components.NavItem
 import com.tubers.blacklight.ui.components.SideNav
 import com.tubers.blacklight.ui.components.SubHeader
@@ -130,6 +131,11 @@ fun UvGlowRoot(vm: StudioViewModel) {
                     UiEvent.OpenPremium -> nav.openScreen(Routes.PREMIUM)
                 }
             }
+        }
+
+        // Photosensitivity warning before Strobe/SOS first runs, wherever it was chosen from.
+        state.flashWarningFor?.let { mode ->
+            FlashWarningDialog(mode.displayName, onContinue = vm::acceptFlashWarning, onCancel = vm::declineFlashWarning)
         }
 
         val showChrome = route != null && route != Routes.INTRO

@@ -18,6 +18,9 @@ enum class LightMode(
     STROBE("strobe", "Strobe", "Gentle, max 3 flashes/s", 0.5f, true),
     BLACKLIGHT("black", "Blacklight", "Deep glow, drifting specks", 5f, true);
 
+    /** Modes that flash on and off, so they need the photosensitivity warning first. */
+    val flashes: Boolean get() = this == STROBE || this == SOS
+
     companion object {
         fun fromId(id: String?): LightMode = entries.firstOrNull { it.id == id } ?: UV_GLOW
     }

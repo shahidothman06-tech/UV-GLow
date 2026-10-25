@@ -93,6 +93,38 @@ fun ConfirmDialog(
 }
 
 /**
+ * Shown once, before Strobe or SOS first runs. Nothing flashes until "Continue"; dismissing it
+ * (Cancel, back, tapping outside) keeps the light steady.
+ */
+@Composable
+fun FlashWarningDialog(modeName: String, onContinue: () -> Unit, onCancel: () -> Unit) {
+    val accent = LocalAccent.current
+    AlertDialog(
+        onDismissRequest = onCancel,
+        containerColor = UvColors.Surface,
+        title = { Text("Flashing lights", color = UvColors.Text, fontSize = 18.sp, fontWeight = FontWeight.SemiBold) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "$modeName makes the screen flash on and off. Flashing lights can trigger seizures in people " +
+                        "with photosensitive epilepsy, and can cause discomfort, headaches or dizziness.",
+                    style = UvType.lede,
+                )
+                Text(
+                    "Don't use it if you or anyone nearby has epilepsy or is sensitive to flashing light. Stop " +
+                        "straight away if you feel unwell. Strobe never exceeds 3 flashes per second.",
+                    style = UvType.lede,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onContinue) { Text("Continue", color = accent.text, fontWeight = FontWeight.SemiBold) }
+        },
+        dismissButton = { TextButton(onClick = onCancel) { Text("Cancel", color = UvColors.TextSoft) } },
+    )
+}
+
+/**
  * Custom color picker: hue, saturation and brightness sliders with a live preview.
  * Brightness is kept above 35% so the beam stays visible on a dark screen.
  */

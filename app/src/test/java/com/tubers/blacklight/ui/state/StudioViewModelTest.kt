@@ -127,9 +127,78 @@ class StudioViewModelTest {
 
         vm.setPremiumPreview(true)
         vm.selectMode(LightMode.STROBE)
+        vm.acceptFlashWarning()
         runCurrent()
         assertEquals(LightMode.STROBE, vm.uiState.value.light.mode)
         collector.cancel()
+    }
+
+    @Test
+    fun flashingModes_waitForWarning_andAcceptanceIsRemembered() = runTest(dispatcher) {
+        settings.lightFlow.value = LightSettings(mode = LightMode.UV_GLOW)
+        val vm = newViewModel()
+        runCurrent()
+        assertEquals(null, vm.uiState.value.flashWarningFor)
+
+        vm.selectMode(LightMode.SOS)
+        runCurrent()
+        assertEquals(LightMode.SOS, vm.uiState.value.flashWarningFor)
+        assertEquals("nothing flashes before the answer", LightMode.UV_GLOW, vm.uiState.value.light.mode)
+
+        vm.declineFlashWarning()
+        runCurrent()
+        assertEquals(null, vm.uiState.value.flashWarningFor)
+        assertEquals(LightMode.UV_GLOW, vm.uiState.value.light.mode)
+
+        vm.selectMode(LightMode.SOS)
+        vm.acceptFlashWarning()
+        runCurrent()
+        assertEquals(LightMode.SOS, vm.uiState.value.light.mode)
+        assertTrue(vm.uiState.value.flashingAllowed)
+        advanceTimeBy(1_000)
+        assertTrue("choice saved to settings", settings.prefsFlow.value.flashWarningAccepted)
+
+        vm.setPremiumPreview(true)
+        vm.selectMode(LightMode.STROBE)
+        runCurrent()
+        assertEquals("asked only once", null, vm.uiState.value.flashWarningFor)
+        assertEquals(LightMode.STROBE, vm.uiState.value.light.mode)
+    }
+
+    @Test
+    fun restoredFlashingMode_staysStillUntilWarningAnswered() = runTest(dispatcher) {
+        // The fixture restores SOS with the warning never accepted (e.g. saved by an older version).
+        val vm = newViewModel()
+        runCurrent()
+        val s = vm.uiState.value
+        assertEquals(LightMode.SOS, s.flashWarningFor)
+        assertFalse(s.flashingAllowed)
+
+        vm.declineFlashWarning()
+        runCurrent()
+        assertEquals(LightMode.UV_GLOW, vm.uiState.value.light.mode)
+        assertTrue(vm.uiState.value.flashingAllowed)
+    }
+
+    @Test
+    fun presetWithFlashingMode_alsoWaitsForWarning() = runTest(dispatcher) {
+        settings.lightFlow.value = LightSettings(mode = LightMode.UV_GLOW)
+        val vm = newViewModel()
+        runCurrent()
+        vm.selectMode(LightMode.SOS)
+        vm.acceptFlashWarning()
+        vm.savePreset("Signal")
+        runCurrent()
+        vm.resetSettings() // also asks for the warning again
+        runCurrent()
+
+        vm.applyPreset(vm.uiState.value.presets.first { it.name == "Signal" })
+        runCurrent()
+        assertEquals(LightMode.SOS, vm.uiState.value.flashWarningFor)
+        assertEquals(LightMode.UV_GLOW, vm.uiState.value.light.mode)
+        vm.acceptFlashWarning()
+        runCurrent()
+        assertEquals(LightMode.SOS, vm.uiState.value.light.mode)
     }
 
     @Test

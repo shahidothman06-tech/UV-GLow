@@ -51,7 +51,8 @@ fun HomeScreen(
     onOpenPresets: () -> Unit,
 ) {
     val light = state.light
-    val animate = shouldAnimate(light.isOn, state.prefs.reducedMotion)
+    // Strobe/SOS stay still until the flashing-lights warning is accepted.
+    val animate = shouldAnimate(light.isOn, state.prefs.reducedMotion) && state.flashingAllowed
     val timerText = TimerLogic.format(state.timer.remainingMs)
 
     BoxWithConstraints(Modifier.fillMaxSize()) {

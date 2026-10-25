@@ -43,6 +43,7 @@ class DataStoreSettingsRepository(context: Context) : SettingsRepository {
         val LED = booleanPreferencesKey("led_enabled")
         val PREMIUM_PREVIEW = booleanPreferencesKey("premium_preview_demo")
         val INTRO_SEEN = booleanPreferencesKey("intro_seen")
+        val FLASH_WARNING_ACCEPTED = booleanPreferencesKey("flash_warning_accepted")
     }
 
     /** A disk read error must not crash the app: fall back to defaults. */
@@ -104,6 +105,7 @@ class DataStoreSettingsRepository(context: Context) : SettingsRepository {
         ledEnabled = this[Keys.LED] ?: false,
         premiumPreview = this[Keys.PREMIUM_PREVIEW] ?: false,
         introSeen = this[Keys.INTRO_SEEN] ?: false,
+        flashWarningAccepted = this[Keys.FLASH_WARNING_ACCEPTED] ?: false,
     )
 
     private fun MutablePreferences.writeAppPreferences(a: AppPreferences) {
@@ -111,5 +113,6 @@ class DataStoreSettingsRepository(context: Context) : SettingsRepository {
         this[Keys.LED] = a.ledEnabled
         this[Keys.PREMIUM_PREVIEW] = a.premiumPreview
         this[Keys.INTRO_SEEN] = a.introSeen
+        this[Keys.FLASH_WARNING_ACCEPTED] = a.flashWarningAccepted
     }
 }

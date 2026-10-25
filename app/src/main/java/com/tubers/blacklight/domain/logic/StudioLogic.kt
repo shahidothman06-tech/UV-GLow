@@ -102,6 +102,17 @@ object StudioLogic {
     /** Default look. Presets and themes are kept by the caller. */
     fun reset(): LightSettings = LightSettings()
 
+    /**
+     * True when moving to [next] would start a flashing mode (Strobe, SOS) the user hasn't yet
+     * accepted the photosensitivity warning for.
+     */
+    fun needsFlashWarning(next: LightSettings, warningAccepted: Boolean): Boolean =
+        next.mode.flashes && !warningAccepted
+
+    /** After the warning is declined: keep everything but swap a flashing mode for the steady glow. */
+    fun withoutFlashing(s: LightSettings): LightSettings =
+        if (s.mode.flashes) s.copy(mode = LightMode.UV_GLOW) else s
+
     /** If the applied theme was deleted, keep the colors but drop the reference. */
     fun onThemeDeleted(s: LightSettings, deletedId: String): LightSettings =
         if (s.themeId == deletedId) s.copy(themeId = null) else s

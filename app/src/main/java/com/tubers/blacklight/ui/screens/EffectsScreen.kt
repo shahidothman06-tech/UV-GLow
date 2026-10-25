@@ -72,7 +72,8 @@ fun LightMode.icon(): ImageVector = when (this) {
 @Composable
 fun EffectsScreen(state: StudioUiState, vm: StudioViewModel, onOpenSettings: () -> Unit) {
     val light = state.light
-    val animate = shouldAnimate(light.isOn, state.prefs.reducedMotion)
+    // Strobe/SOS stay still until the flashing-lights warning is accepted.
+    val animate = shouldAnimate(light.isOn, state.prefs.reducedMotion) && state.flashingAllowed
     Column(
         Modifier
             .fillMaxSize()

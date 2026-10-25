@@ -71,6 +71,8 @@ class StudioViewModel(
     private val light = MutableStateFlow(LightSettings())
     private val prefs = MutableStateFlow(AppPreferences())
     private val timer = MutableStateFlow(TimerState())
+    /** A look that would start Strobe/SOS, held back until the flashing-lights warning is answered. */
+    private val pendingFlash = MutableStateFlow<LightSettings?>(null)
 
     private val events = Channel<UiEvent>(Channel.BUFFERED)
     val uiEvents: Flow<UiEvent> = events.receiveAsFlow()
@@ -94,7 +96,8 @@ class StudioViewModel(
             torch.isTorchOn,
             billing.status,
             loaded,
-        ) { core, torchOn, billingStatus, _ ->
+            pendingFlash,
+        ) { core, torchOn, billingStatus, _, _ ->
             // The combines above only signal that something changed. In-memory state is read
             // directly so a snapshot can never pair loaded = true with not-yet-restored
             // preferences (the start screen is chosen from the first loaded snapshot).
@@ -109,6 +112,7 @@ class StudioViewModel(
                 torchOn = torchOn,
                 billing = billingStatus,
                 demoAllowed = demoAllowed,
+                flashWarningFor = pendingFlash.value?.mode,
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, StudioUiState())
 
@@ -117,6 +121,8 @@ class StudioViewModel(
             // Restore the last session before showing anything.
             light.value = settingsRepo.light.first()
             prefs.value = settingsRepo.preferences.first()
+            // A flashing mode saved before the warning existed waits (paused) for it too.
+            if (StudioLogic.needsFlashWarning(light.value, prefs.value.flashWarningAccepted)) pendingFlash.value = light.value
             loaded.value = true
 
             launch { light.drop(1).collectLatest { delay(persistDelayMs); settingsRepo.updateLight { _ -> it } } }
@@ -162,7 +168,35 @@ class StudioViewModel(
 
     fun selectMode(mode: LightMode) {
         val next = StudioLogic.selectMode(light.value, mode, isPremium)
-        if (next == null) gatePremium(mode.displayName) else light.value = next
+        if (next == null) gatePremium(mode.displayName) else applyLook(next)
+    }
+
+    /** Applies [next], or holds it for the flashing-lights warning if it would start Strobe/SOS. */
+    private fun applyLook(next: LightSettings): Boolean {
+        if (next.mode != light.value.mode && StudioLogic.needsFlashWarning(next, prefs.value.flashWarningAccepted)) {
+            pendingFlash.value = next
+            return false
+        }
+        light.value = next
+        return true
+    }
+
+    /** "Continue" on the flashing-lights warning: remembered, so it's asked only once. */
+    fun acceptFlashWarning() {
+        val next = pendingFlash.value ?: return
+        prefs.update { it.copy(flashWarningAccepted = true) }
+        pendingFlash.value = null
+        light.value = next
+    }
+
+    /** "Cancel" / back on the warning: nothing flashes; a restored flashing mode falls back to UV Glow. */
+    fun declineFlashWarning() {
+        if (pendingFlash.value == null) return
+        pendingFlash.value = null
+        if (light.value.mode.flashes && !prefs.value.flashWarningAccepted) {
+            light.update(StudioLogic::withoutFlashing)
+            message("Switched to ${LightMode.UV_GLOW.displayName} — no flashing")
+        }
     }
 
     fun selectSwatch(swatch: Swatches) = light.update { StudioLogic.selectSwatch(it, swatch) }
@@ -239,8 +273,7 @@ class StudioViewModel(
         val next = StudioLogic.applyPreset(light.value, preset, isPremium)
         if (next == null) {
             gatePremium(preset.mode.displayName)
-        } else {
-            light.value = next
+        } else if (applyLook(next)) {
             message("“${preset.name}” applied")
         }
     }
@@ -334,7 +367,9 @@ class StudioViewModel(
     /** Restores the default look and comfort settings. Presets and themes are kept. */
     fun resetSettings() {
         light.value = StudioLogic.reset()
-        prefs.update { it.copy(reducedMotion = false, ledEnabled = false) }
+        pendingFlash.value = null
+        // The flashing-lights warning is a comfort setting too, so it will be asked again.
+        prefs.update { it.copy(reducedMotion = false, ledEnabled = false, flashWarningAccepted = false) }
         message("Settings reset")
     }
 

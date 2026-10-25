@@ -4,6 +4,7 @@ import com.tubers.blacklight.BuildConfig
 import com.tubers.blacklight.billing.BillingStatus
 import com.tubers.blacklight.domain.model.AppPreferences
 import com.tubers.blacklight.domain.model.BuiltInThemes
+import com.tubers.blacklight.domain.model.LightMode
 import com.tubers.blacklight.domain.model.LightSettings
 import com.tubers.blacklight.domain.model.Preset
 import com.tubers.blacklight.domain.model.ThemeItem
@@ -22,7 +23,12 @@ data class StudioUiState(
     val billing: BillingStatus = BillingStatus(),
     /** Demo checkout and "Preview Premium (demo)" exist only in debug builds. */
     val demoAllowed: Boolean = BuildConfig.DEBUG,
+    /** Strobe/SOS is waiting on the flashing-lights warning; the dialog shows while this is set. */
+    val flashWarningFor: LightMode? = null,
 ) {
+    /** False while a flashing mode is shown but its warning hasn't been accepted: keep it still. */
+    val flashingAllowed: Boolean get() = !light.mode.flashes || prefs.flashWarningAccepted
+
     /** Premium is unlocked by a real subscription, or (debug builds only) by the labelled demo preview. */
     val isPremium: Boolean get() = billing.hasActiveSubscription || (demoAllowed && prefs.premiumPreview)
     val themes: List<ThemeItem> get() = BuiltInThemes.all + customThemes
