@@ -3,8 +3,11 @@ package com.tubers.blacklight.ui.state
 import com.tubers.blacklight.domain.model.LightMode
 import com.tubers.blacklight.domain.model.LightSettings
 import com.tubers.blacklight.domain.model.TimerStatus
+import com.tubers.blacklight.domain.repository.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -48,14 +51,51 @@ class StudioViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun TestScope.newViewModel() = StudioViewModel(
+    private fun TestScope.newViewModel(demoAllowed: Boolean = true) = StudioViewModel(
         settingsRepo = settings,
         presetRepo = presets,
         themeRepo = themes,
         torch = torch,
         billing = FakeBilling(),
         clock = { testScheduler.currentTime },
+        demoAllowed = demoAllowed,
     )
+
+    @Test
+    fun loadedState_alwaysCarriesTheRestoredPreferences() = runTest(dispatcher) {
+        // The start screen (intro vs Home) is chosen from the first loaded state, so that state
+        // must already hold the saved preferences, never the defaults.
+        settings.prefsFlow.value = settings.prefsFlow.value.copy(introSeen = true, reducedMotion = true)
+        // Like DataStore, reads suspend (disk IO) instead of returning on the spot.
+        val slowSettings = object : SettingsRepository by settings {
+            override val light = settings.lightFlow.onStart { delay(5) }
+            override val preferences = settings.prefsFlow.onStart { delay(5) }
+        }
+        val vm = StudioViewModel(slowSettings, presets, themes, torch, FakeBilling(), clock = { testScheduler.currentTime })
+        val seen = mutableListOf<StudioUiState>()
+        val collector = launch { vm.uiState.collect { seen += it } }
+        advanceUntilIdle()
+        val firstLoaded = seen.first { it.loaded }
+        assertTrue(firstLoaded.prefs.introSeen)
+        assertTrue(firstLoaded.prefs.reducedMotion)
+        assertEquals(33, firstLoaded.light.brightness)
+        collector.cancel()
+    }
+
+    @Test
+    fun releaseBuild_ignoresDemoPremiumPreview() = runTest(dispatcher) {
+        // A preview switched on in a debug install must not unlock Premium after updating to release.
+        settings.prefsFlow.value = settings.prefsFlow.value.copy(premiumPreview = true)
+        val vm = newViewModel(demoAllowed = false)
+        runCurrent()
+        assertFalse(vm.uiState.value.isPremium)
+
+        vm.setPremiumPreview(true)
+        vm.selectMode(LightMode.BLACKLIGHT)
+        runCurrent()
+        assertFalse(vm.uiState.value.isPremium)
+        assertEquals(LightMode.SOS, vm.uiState.value.light.mode)
+    }
 
     @Test
     fun restoresPersistedLook_andPersistsChanges() = runTest(dispatcher) {

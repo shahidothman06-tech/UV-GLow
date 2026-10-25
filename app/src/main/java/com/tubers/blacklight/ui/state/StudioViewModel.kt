@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.tubers.blacklight.BuildConfig
 import com.tubers.blacklight.UvGlowApp
 import com.tubers.blacklight.billing.BillingGateway
 import com.tubers.blacklight.billing.PlanType
@@ -62,6 +63,8 @@ class StudioViewModel(
     private val billing: BillingGateway,
     private val clock: () -> Long = { SystemClock.elapsedRealtime() },
     private val persistDelayMs: Long = 250L,
+    /** Demo checkout and the Premium preview switch; never available in release builds. */
+    private val demoAllowed: Boolean = BuildConfig.DEBUG,
 ) : ViewModel() {
 
     private val loaded = MutableStateFlow(false)
@@ -91,17 +94,21 @@ class StudioViewModel(
             torch.isTorchOn,
             billing.status,
             loaded,
-        ) { core, torchOn, billingStatus, isLoaded ->
+        ) { core, torchOn, billingStatus, _ ->
+            // The combines above only signal that something changed. In-memory state is read
+            // directly so a snapshot can never pair loaded = true with not-yet-restored
+            // preferences (the start screen is chosen from the first loaded snapshot).
             StudioUiState(
-                loaded = isLoaded,
-                light = core.light,
-                prefs = core.prefs,
+                loaded = loaded.value,
+                light = light.value,
+                prefs = prefs.value,
                 presets = core.presets,
                 customThemes = core.themes,
-                timer = core.timer,
+                timer = timer.value,
                 torchAvailable = torch.isAvailable,
                 torchOn = torchOn,
                 billing = billingStatus,
+                demoAllowed = demoAllowed,
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, StudioUiState())
 
@@ -119,11 +126,15 @@ class StudioViewModel(
         billing.connect()
     }
 
-    private val isPremium: Boolean get() = uiState.value.billing.hasActiveSubscription || prefs.value.premiumPreview
+    private val isPremium: Boolean
+        get() = billing.status.value.hasActiveSubscription || (demoAllowed && prefs.value.premiumPreview)
 
     private fun message(text: String) {
         events.trySend(UiEvent.Message(text))
     }
+
+    /** For UI-only failures, such as no browser to open a link. */
+    fun showMessage(text: String) = message(text)
 
     private fun gatePremium(feature: String) {
         events.trySend(UiEvent.OpenPremium)
@@ -313,6 +324,7 @@ class StudioViewModel(
     }
 
     fun setPremiumPreview(enabled: Boolean) {
+        if (!demoAllowed) return
         prefs.update { it.copy(premiumPreview = enabled) }
         message(if (enabled) "Premium preview on (demo)" else "Premium preview off")
     }
@@ -332,7 +344,9 @@ class StudioViewModel(
         viewModelScope.launch {
             when (val outcome = billing.purchase(activity, plan)) {
                 PurchaseOutcome.Launched -> Unit
-                PurchaseOutcome.NotConfigured -> message("Demo only — billing isn’t set up, nothing was charged")
+                PurchaseOutcome.NotConfigured -> message(
+                    if (demoAllowed) "Demo only — billing isn’t set up, nothing was charged" else BILLING_UNAVAILABLE
+                )
                 is PurchaseOutcome.Failed -> message(outcome.message)
             }
         }
@@ -343,7 +357,9 @@ class StudioViewModel(
             when (val outcome = billing.restore()) {
                 RestoreOutcome.Restored -> message("Premium restored")
                 RestoreOutcome.NothingFound -> message("No purchases found")
-                RestoreOutcome.NotConfigured -> message("No purchases found (demo — billing isn’t set up)")
+                RestoreOutcome.NotConfigured -> message(
+                    if (demoAllowed) "No purchases found (demo — billing isn’t set up)" else BILLING_UNAVAILABLE
+                )
                 is RestoreOutcome.Failed -> message(outcome.message)
             }
         }
@@ -372,6 +388,7 @@ class StudioViewModel(
 
     companion object {
         private const val TICK_MS = 250L
+        private const val BILLING_UNAVAILABLE = "Premium isn’t available right now — Google Play Billing couldn’t be reached"
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

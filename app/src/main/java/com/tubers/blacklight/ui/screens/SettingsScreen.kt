@@ -22,8 +22,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tubers.blacklight.AppLinks
 import com.tubers.blacklight.BuildConfig
 import com.tubers.blacklight.ui.components.AccentButton
 import com.tubers.blacklight.ui.components.MiniButton
@@ -35,6 +37,7 @@ import com.tubers.blacklight.ui.components.SectionLabel
 import com.tubers.blacklight.ui.components.SwitchRow
 import com.tubers.blacklight.ui.components.UvIcons
 import com.tubers.blacklight.ui.components.UvPanel
+import com.tubers.blacklight.ui.components.openExternal
 import com.tubers.blacklight.ui.components.readableWidth
 import com.tubers.blacklight.ui.components.verticalFadeEdges
 import com.tubers.blacklight.ui.state.StudioUiState
@@ -46,6 +49,7 @@ fun SettingsScreen(state: StudioUiState, vm: StudioViewModel, onReplayIntro: () 
     var confirmReset by rememberSaveable { mutableStateOf(false) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
     val groupPadding = PaddingValues(horizontal = 14.dp, vertical = 2.dp)
+    val context = LocalContext.current
     // Back (including predictive back) closes the inline confirmation before leaving the tab.
     BackHandler(enabled = confirmReset) { confirmReset = false }
 
@@ -84,6 +88,19 @@ fun SettingsScreen(state: StudioUiState, vm: StudioViewModel, onReplayIntro: () 
                 checked = state.prefs.ledEnabled && state.torchAvailable,
                 onCheckedChange = vm::setLedEnabled,
                 enabled = state.torchAvailable,
+            )
+        }
+
+        SectionLabel("Subscription")
+        UvPanel(contentPadding = groupPadding) {
+            NavRow(
+                UvIcons.Crown,
+                "Manage subscription",
+                if (state.billing.hasActiveSubscription) "Change plan or cancel in Google Play" else "See your subscriptions in Google Play",
+                {
+                    val url = AppLinks.manageSubscriptionUrl(state.billing.activeProductId)
+                    if (!context.openExternal(url)) vm.showMessage("Couldn’t open Google Play")
+                },
             )
         }
 

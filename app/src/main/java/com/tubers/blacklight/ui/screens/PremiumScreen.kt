@@ -45,12 +45,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tubers.blacklight.R
+import com.tubers.blacklight.billing.PlanOffer
+import com.tubers.blacklight.billing.PlanPricing
 import com.tubers.blacklight.billing.PlanType
 import com.tubers.blacklight.domain.logic.PremiumRules
 import com.tubers.blacklight.ui.components.AccentButton
+import com.tubers.blacklight.ui.components.Callout
 import com.tubers.blacklight.ui.components.GhostButton
+import com.tubers.blacklight.ui.components.Note
 import com.tubers.blacklight.ui.components.SectionLabel
 import com.tubers.blacklight.ui.components.SwitchRow
+import com.tubers.blacklight.ui.components.UvIcons
 import com.tubers.blacklight.ui.components.UvPanel
 import com.tubers.blacklight.ui.components.readableWidth
 import com.tubers.blacklight.ui.components.verticalFadeEdges
@@ -73,9 +78,11 @@ fun PremiumScreen(state: StudioUiState, vm: StudioViewModel) {
     val context = LocalContext.current
     var plan by rememberSaveable { mutableStateOf(PlanType.YEARLY) }
     val billing = state.billing
-    val demo = !billing.configured
-    val monthlyPrice = billing.plans[PlanType.MONTHLY]?.recurring?.formattedPrice ?: "$2.99"
-    val yearlyPrice = billing.plans[PlanType.YEARLY]?.recurring?.formattedPrice ?: "$19.99"
+    // Debug builds without product IDs run a labelled demo. Release builds never do: if billing
+    // isn't set up or Play can't be used, they show an error and no checkout.
+    val demo = !billing.configured && state.demoAllowed
+    val billingError = !demo && (!billing.configured || billing.unavailable)
+    val selectedOffer = billing.plans[plan]
 
     Column(
         Modifier
@@ -112,52 +119,95 @@ fun PremiumScreen(state: StudioUiState, vm: StudioViewModel) {
             CompareRow("Auto-off timer", "Yes", "Yes", last = true)
         }
 
-        SectionLabel("Choose a plan")
-        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            PlanCard("Monthly", monthlyPrice, "per month", null, plan == PlanType.MONTHLY, { plan = PlanType.MONTHLY }, Modifier.weight(1f).fillMaxHeight())
-            PlanCard("Yearly", yearlyPrice, "per year · about $1.67/mo", "BEST VALUE", plan == PlanType.YEARLY, { plan = PlanType.YEARLY }, Modifier.weight(1f).fillMaxHeight())
-        }
+        if (billingError && !billing.hasActiveSubscription) {
+            Callout(UvIcons.Info) {
+                Text(
+                    "Premium isn't available right now. Google Play Billing couldn't be reached on this device" +
+                        (billing.lastError?.let { " ($it)" } ?: "") + ". Check that Google Play is installed and " +
+                        "signed in, then try again.",
+                    fontSize = 12.sp, color = UvColors.TextBody, lineHeight = 18.sp,
+                )
+            }
+        } else {
+            SectionLabel("Choose a plan")
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                PlanType.entries.forEach { type ->
+                    PlanCard(
+                        title = if (type == PlanType.MONTHLY) "Monthly" else "Yearly",
+                        offer = billing.plans[type],
+                        state = when {
+                            demo -> PlanCardState.DEMO
+                            type in billing.unavailablePlans -> PlanCardState.UNAVAILABLE
+                            else -> PlanCardState.LOADING
+                        },
+                        badge = if (type == PlanType.YEARLY) "BEST VALUE" else null,
+                        selected = plan == type,
+                        onClick = { plan = type },
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                    )
+                }
+            }
 
-        AccentButton(
-            text = if (demo) "Continue · demo checkout" else "Continue",
-            onClick = { context.findActivity()?.let { vm.purchase(it, plan) } },
-            modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
-        )
-        GhostButton("Restore purchases", vm::restorePurchases, Modifier.fillMaxWidth().padding(top = 10.dp))
+            AccentButton(
+                text = if (demo) "Continue · demo checkout" else "Continue",
+                onClick = { context.findActivity()?.let { vm.purchase(it, plan) } },
+                modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
+                enabled = demo || selectedOffer != null,
+            )
+            // Play policy: the renewal terms sit right next to the purchase button.
+            Text(
+                RENEWAL_TERMS + (selectedOffer?.let { " ${PlanPricing.introLabel(it) ?: PlanPricing.recurringLabel(it)}." } ?: ""),
+                fontSize = 11.sp, color = UvColors.TextSecondary, textAlign = TextAlign.Center, lineHeight = 16.sp,
+                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+            )
+            GhostButton("Restore purchases", vm::restorePurchases, Modifier.fillMaxWidth().padding(top = 10.dp))
+        }
 
         Row(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Subscription status", fontSize = 12.sp, color = UvColors.TextSecondary, modifier = Modifier.weight(1f))
             Text(
                 when {
                     billing.hasActiveSubscription -> "Premium active"
-                    state.prefs.premiumPreview -> "Premium preview (demo)"
+                    billing.pendingPurchase -> "Payment pending"
+                    state.demoAllowed && state.prefs.premiumPreview -> "Premium preview (demo)"
                     else -> "Free plan"
                 },
                 fontSize = 12.sp, fontWeight = FontWeight.Medium, color = UvColors.Text,
             )
         }
+        if (billing.pendingPurchase) {
+            Note("Your purchase is waiting for payment. Premium unlocks as soon as Google Play confirms it.", icon = null)
+        }
 
-        UvPanel(contentPadding = PaddingValues(horizontal = 14.dp, vertical = 2.dp)) {
-            SwitchRow(
-                icon = null,
-                title = "Preview Premium (demo)",
-                subtitle = "Unlocks Premium features on this device so you can try them. Nothing is bought.",
-                checked = state.prefs.premiumPreview,
-                onCheckedChange = vm::setPremiumPreview,
-            )
+        if (state.demoAllowed) {
+            UvPanel(contentPadding = PaddingValues(horizontal = 14.dp, vertical = 2.dp)) {
+                SwitchRow(
+                    icon = null,
+                    title = "Preview Premium (demo)",
+                    subtitle = "Debug builds only. Unlocks Premium features on this device so you can try them. Nothing is bought.",
+                    checked = state.prefs.premiumPreview,
+                    onCheckedChange = vm::setPremiumPreview,
+                )
+            }
         }
 
         Text(
             if (demo) {
-                "Demo prices. Billing isn't connected and no payment is taken. Google Play Billing is required before release."
+                "Demo — billing isn't connected and no payment is taken. Real prices load from Google Play once " +
+                    "product IDs are set in gradle.properties."
             } else {
-                "Payment is handled by Google Play. Cancel anytime in Play Store › Subscriptions."
+                "Payment is handled by Google Play. Manage or cancel anytime in Google Play › Subscriptions, " +
+                    "or from Settings › Manage subscription."
             },
             fontSize = 11.sp, color = UvColors.TextMuted, textAlign = TextAlign.Center, lineHeight = 16.sp,
             modifier = Modifier.fillMaxWidth().padding(top = 18.dp),
         )
     }
 }
+
+private const val RENEWAL_TERMS = "Renews automatically until cancelled. Cancel anytime in Google Play."
+
+private enum class PlanCardState { DEMO, LOADING, UNAVAILABLE }
 
 @Composable
 private fun CompareRow(feature: String, free: String, premium: String, header: Boolean = false, last: Boolean = false, premiumColor: Color = UvColors.Text) {
@@ -175,16 +225,28 @@ private fun CompareRow(feature: String, free: String, premium: String, header: B
     }
 }
 
+/**
+ * One plan. The main figure is Play's localised renewing price for that plan's own period (so the
+ * yearly card leads with the yearly price), with any trial or intro price spelled out below it.
+ */
 @Composable
 private fun PlanCard(
     title: String,
-    price: String,
-    detail: String,
+    offer: PlanOffer?,
+    state: PlanCardState,
     badge: String?,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier,
 ) {
+    val price = offer?.recurring?.formattedPrice ?: "—"
+    val detail = when {
+        offer != null -> "per ${PlanPricing.periodUnit(offer.recurring.billingPeriod)}"
+        state == PlanCardState.DEMO -> "Demo · price from Google Play"
+        state == PlanCardState.UNAVAILABLE -> "Not available"
+        else -> "Loading price…"
+    }
+    val intro = offer?.let { PlanPricing.introLabel(it) }
     val accent = LocalAccent.current
     Column(
         modifier
@@ -206,5 +268,8 @@ private fun PlanCard(
         Text(title, style = UvType.bodyStrong, color = UvColors.Text)
         Text(price, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.5).sp, color = UvColors.Text, modifier = Modifier.padding(top = 6.dp))
         Text(detail, style = UvType.small)
+        if (intro != null) {
+            Text(intro, style = UvType.small, color = accent.text, modifier = Modifier.padding(top = 4.dp))
+        }
     }
 }
