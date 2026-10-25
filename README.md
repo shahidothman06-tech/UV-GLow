@@ -169,9 +169,10 @@ To go live:
       264 px design asset). Android Studio › *New › Image Asset* creates every density.
 - [ ] Billing set up as above. Test a purchase, a free trial, restore and *Manage subscription*
       with licence testers.
-- [ ] **Privacy policy:** set `AppLinks.CONTACT_EMAIL` and the same address in `docs/privacy-policy.md`
-      (`PrivacyPolicySyncTest` checks the two copies match), publish the page at a public https URL, set `AppLinks.PRIVACY_POLICY_URL`
-      to that URL, and enter the same URL in Play Console › App content › Privacy policy.
+- [ ] **Privacy policy:** published by GitHub Pages (Settings › Pages › Deploy from a branch ›
+      `main` › `/docs`) at https://shahidothman06-tech.github.io/UV-GLow/privacy-policy (=
+      `AppLinks.PRIVACY_POLICY_URL`). Enter that URL in Play Console › App content › Privacy policy.
+      Edit `strings.xml` and `docs/privacy-policy.md` together; `PrivacyPolicySyncTest` checks they match.
 - [ ] **Data safety form:** "No data collected" and "No data shared". Settings stay on the device
       (and in Android backup); purchases are processed by Google Play. Check this still holds
       if you add any SDK.

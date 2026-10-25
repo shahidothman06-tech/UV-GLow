@@ -5,16 +5,15 @@ object AppLinks {
 
     /**
      * Public privacy policy page entered in Play Console › App content › Privacy policy. The app
-     * itself shows the policy in-app (PrivacyPolicyScreen) and doesn't open this.
-     * TODO before release: host docs/privacy-policy.md and put its https URL here.
+     * itself shows the policy in-app (PrivacyPolicyScreen) and doesn't open this. Published from
+     * docs/privacy-policy.md by GitHub Pages (main branch, /docs folder).
      */
-    const val PRIVACY_POLICY_URL = ""
+    const val PRIVACY_POLICY_URL = "https://shahidothman06-tech.github.io/UV-GLow/privacy-policy"
 
     /**
      * Shown in the privacy policy's Contact section (in-app and in docs/privacy-policy.md).
-     * TODO before release: replace with your real support address.
      */
-    const val CONTACT_EMAIL = "your-email@example.com"
+    const val CONTACT_EMAIL = "mailtosarwar359@gmail.com"
 
     const val PACKAGE_NAME = "com.tubers.blacklight"
 

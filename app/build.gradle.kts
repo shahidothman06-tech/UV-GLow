@@ -100,3 +100,9 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
+
+// PrivacyPolicySyncTest reads these files directly, so a change to either must re-run the tests.
+tasks.withType<Test>().configureEach {
+    inputs.file(rootProject.file("docs/privacy-policy.md"))
+    inputs.file("src/main/res/values/strings.xml")
+}

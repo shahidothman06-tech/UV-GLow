@@ -1,7 +1,8 @@
 # UV Glow — Privacy policy
 
-<!-- Public copy of the in-app policy (app/src/main/res/values/strings.xml, privacy_* strings).
-     Keep both in sync. Replace the contact email with AppLinks.CONTACT_EMAIL's real value. -->
+<!-- Public copy of the in-app policy (app/src/main/res/values/strings.xml, privacy_* strings),
+     published at https://shahidothman06-tech.github.io/UV-GLow/privacy-policy (GitHub Pages).
+     Keep both in sync; PrivacyPolicySyncTest checks it. -->
 
 _Last updated: 25 October 2026_
 
@@ -41,4 +42,4 @@ If anything changes, we'll update this page and the date at the top.
 
 ## Contact
 
-Questions about this policy: your-email@example.com
+Questions about this policy: mailtosarwar359@gmail.com
