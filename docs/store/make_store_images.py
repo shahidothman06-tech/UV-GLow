@@ -38,11 +38,11 @@ WHITE = (0xF3, 0xF2, 0xF2)
 
 SCREENS = [
     ("01-home", "Instant violet glow screen light"),
-    ("02-effects", "6 glowing light effects"),
+    ("02-effects", "4 free glowing light effects"),
     ("03-themes", "Pick your colour theme"),
     ("04-presets", "Save your favourite presets"),
     ("05-timer", "Auto-off timer saves battery"),
-    ("06-settings", "Simple, private, no account"),
+    ("06-settings", "Simple to use, no account needed"),
 ]
 TITLE = "UV Glow"
 TAGLINE = "Violet screen light & flashlight"
@@ -78,12 +78,15 @@ def rounded(image: Image.Image, radius: int) -> Image.Image:
 
 
 def wrap(draw: ImageDraw.ImageDraw, text: str, fnt, max_width: int) -> list[str]:
-    """One line if it fits, else the two-line split whose longer line is shortest (balanced)."""
+    """One line if it fits; else break after a comma if both lines fit, otherwise the balanced split
+    (the one whose longer line is shortest)."""
     if draw.textlength(text, font=fnt) <= max_width:
         return [text]
     words = text.split()
     splits = [(" ".join(words[:i]), " ".join(words[i:])) for i in range(1, len(words))]
-    return list(min(splits, key=lambda s: max(draw.textlength(s[0], font=fnt), draw.textlength(s[1], font=fnt))))
+    widest = lambda s: max(draw.textlength(s[0], font=fnt), draw.textlength(s[1], font=fnt))
+    at_comma = [s for s in splits if s[0].endswith(",") and widest(s) <= max_width]
+    return list(min(at_comma or splits, key=widest))
 
 
 def framed(raw_path: Path, caption: str, out_path: Path) -> None:
