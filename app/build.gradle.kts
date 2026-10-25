@@ -15,6 +15,29 @@ val admobBannerId: String = (findProperty("ADMOB_BANNER_ID") as String?).orEmpty
 val testAdmobAppId = "ca-app-pub-3940256099942544~3347511713"
 val testAdmobBannerId = "ca-app-pub-3940256099942544/6300978111"
 
+// Upload-key signing for release builds. The values live outside the repo, in
+// C:\Users\Admin\.gradle\gradle.properties (UVGLOW_STORE_FILE, UVGLOW_STORE_PASSWORD,
+// UVGLOW_KEY_ALIAS, UVGLOW_KEY_PASSWORD). Debug builds never need them.
+fun secret(name: String): String? = (findProperty(name) as String?)?.trim()?.takeIf { it.isNotEmpty() }
+val uploadStoreFile = secret("UVGLOW_STORE_FILE")
+val uploadStorePassword = secret("UVGLOW_STORE_PASSWORD")
+val uploadKeyAlias = secret("UVGLOW_KEY_ALIAS")
+val uploadKeyPassword = secret("UVGLOW_KEY_PASSWORD")
+val hasUploadKey = listOf(uploadStoreFile, uploadStorePassword, uploadKeyAlias, uploadKeyPassword).all { it != null } &&
+    file(uploadStoreFile!!).isFile
+
+// Release-only warnings, so a release isn't built by accident without signing or ads.
+if (gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }) {
+    if (!hasUploadKey) {
+        logger.warn("WARNING: UV Glow release is NOT signed - set UVGLOW_STORE_FILE, UVGLOW_STORE_PASSWORD, " +
+            "UVGLOW_KEY_ALIAS and UVGLOW_KEY_PASSWORD in ~/.gradle/gradle.properties (and check the keystore exists).")
+    }
+    if (admobAppId.isBlank() || admobBannerId.isBlank()) {
+        logger.warn("WARNING: ADMOB_APP_ID or ADMOB_BANNER_ID is blank - this UV Glow release will show NO ads. " +
+            "Set both in gradle.properties to enable AdMob.")
+    }
+}
+
 android {
     namespace = "com.tubers.blacklight"
     compileSdk = 36
@@ -33,6 +56,17 @@ android {
         buildConfigField("String", "BILLING_YEARLY_ID", "\"$yearlyProductId\"")
     }
 
+    signingConfigs {
+        if (hasUploadKey) {
+            create("upload") {
+                storeFile = file(uploadStoreFile!!)
+                storePassword = uploadStorePassword
+                keyAlias = uploadKeyAlias
+                keyPassword = uploadKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -41,7 +75,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Configure a real signingConfig before publishing (see README).
+            // Signed with the upload key when it's configured; otherwise unsigned (with a warning).
+            if (hasUploadKey) signingConfig = signingConfigs.getByName("upload")
 
             // A blank banner ID turns ads off (no consent request, no SDK init, no banner). The
             // manifest still needs *some* app ID or the Ads SDK stops the app at launch, so a blank

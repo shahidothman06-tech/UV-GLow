@@ -15,3 +15,6 @@ keystore.properties
 *.apk
 *.aab
 .kotlin/
+
+# Python venv for docs/store/make_store_images.py
+.venv/
