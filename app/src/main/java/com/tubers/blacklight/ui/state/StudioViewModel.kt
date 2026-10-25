@@ -65,6 +65,8 @@ class StudioViewModel(
     private val persistDelayMs: Long = 250L,
     /** Demo checkout and the Premium preview switch; never available in release builds. */
     private val demoAllowed: Boolean = BuildConfig.DEBUG,
+    /** Whether Premium can be opened at all; false in release builds until Premium ships. */
+    private val premiumVisible: Boolean = BuildConfig.DEBUG,
 ) : ViewModel() {
 
     private val loaded = MutableStateFlow(false)
@@ -112,6 +114,7 @@ class StudioViewModel(
                 torchOn = torchOn,
                 billing = billingStatus,
                 demoAllowed = demoAllowed,
+                premiumVisible = premiumVisible,
                 flashWarningFor = pendingFlash.value?.mode,
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, StudioUiState())
@@ -143,8 +146,13 @@ class StudioViewModel(
     fun showMessage(text: String) = message(text)
 
     private fun gatePremium(feature: String) {
-        events.trySend(UiEvent.OpenPremium)
-        message("$feature is part of Premium")
+        if (premiumVisible) {
+            events.trySend(UiEvent.OpenPremium)
+            message("$feature is part of Premium")
+        } else {
+            // Release builds: Premium isn't on sale yet, so there's no screen to send people to.
+            message("$feature comes with Premium in the next update")
+        }
     }
 
     // ---------------------------------------------------------------- light

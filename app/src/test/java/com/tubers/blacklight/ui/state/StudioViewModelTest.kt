@@ -83,6 +83,25 @@ class StudioViewModelTest {
     }
 
     @Test
+    fun releaseBuild_premiumHidden_gatesExplainInsteadOfOpeningPremium() = runTest(dispatcher) {
+        val vm = StudioViewModel(
+            settings, presets, themes, torch, FakeBilling(),
+            clock = { testScheduler.currentTime }, demoAllowed = false, premiumVisible = false,
+        )
+        val events = mutableListOf<UiEvent>()
+        val collector = launch { vm.uiEvents.collect { events += it } }
+        runCurrent()
+        assertFalse(vm.uiState.value.premiumVisible)
+
+        vm.selectMode(LightMode.BLACKLIGHT)
+        runCurrent()
+        assertFalse("no Premium screen to open", events.any { it is UiEvent.OpenPremium })
+        assertTrue(events.any { it is UiEvent.Message && it.text == "Blacklight comes with Premium in the next update" })
+        assertEquals(LightMode.SOS, vm.uiState.value.light.mode)
+        collector.cancel()
+    }
+
+    @Test
     fun releaseBuild_ignoresDemoPremiumPreview() = runTest(dispatcher) {
         // A preview switched on in a debug install must not unlock Premium after updating to release.
         settings.prefsFlow.value = settings.prefsFlow.value.copy(premiumPreview = true)

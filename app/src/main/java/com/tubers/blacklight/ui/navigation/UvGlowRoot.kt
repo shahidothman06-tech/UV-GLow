@@ -141,7 +141,7 @@ fun UvGlowRoot(vm: StudioViewModel) {
                         snackbar.currentSnackbarData?.dismiss()
                         snackbar.showSnackbar(event.text)
                     }
-                    UiEvent.OpenPremium -> nav.openScreen(Routes.PREMIUM)
+                    UiEvent.OpenPremium -> if (state.premiumVisible) nav.openScreen(Routes.PREMIUM)
                 }
             }
         }
@@ -182,7 +182,7 @@ fun UvGlowRoot(vm: StudioViewModel) {
                             if (isSubScreen) {
                                 SubHeader(subScreenTitle.orEmpty(), onBack = { nav.popBackStack() })
                             } else {
-                                TabHeader(onPremium = { nav.openScreen(Routes.PREMIUM) })
+                                TabHeader(onPremium = if (state.premiumVisible) ({ nav.openScreen(Routes.PREMIUM) }) else null)
                             }
                         }
                     },

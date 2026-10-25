@@ -61,9 +61,9 @@ import com.tubers.blacklight.ui.theme.UvType
 
 private val HeaderHeight = 64.dp
 
-/** Brand header for the five tab screens, with the Premium crown. */
+/** Brand header for the five tab screens, with the Premium crown when [onPremium] is given. */
 @Composable
-fun TabHeader(onPremium: () -> Unit) {
+fun TabHeader(onPremium: (() -> Unit)?) {
     val accent = LocalAccent.current
     Row(
         Modifier
@@ -79,7 +79,7 @@ fun TabHeader(onPremium: () -> Unit) {
         )
         Spacer(Modifier.width(10.dp))
         Text("UV Glow", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = UvColors.Text, modifier = Modifier.weight(1f))
-        HeaderIconButton(UvIcons.Crown, "UV Glow Premium", onPremium, tint = accent.text)
+        if (onPremium != null) HeaderIconButton(UvIcons.Crown, "UV Glow Premium", onPremium, tint = accent.text)
     }
 }
 

@@ -91,17 +91,20 @@ fun SettingsScreen(state: StudioUiState, vm: StudioViewModel, onReplayIntro: () 
             )
         }
 
-        SectionLabel("Subscription")
-        UvPanel(contentPadding = groupPadding) {
-            NavRow(
-                UvIcons.Crown,
-                "Manage subscription",
-                if (state.billing.hasActiveSubscription) "Change plan or cancel in Google Play" else "See your subscriptions in Google Play",
-                {
-                    val url = AppLinks.manageSubscriptionUrl(state.billing.activeProductId)
-                    if (!context.openExternal(url)) vm.showMessage("Couldn’t open Google Play")
-                },
-            )
+        // Shown with Premium itself (debug builds only until Premium ships).
+        if (state.premiumVisible) {
+            SectionLabel("Subscription")
+            UvPanel(contentPadding = groupPadding) {
+                NavRow(
+                    UvIcons.Crown,
+                    "Manage subscription",
+                    if (state.billing.hasActiveSubscription) "Change plan or cancel in Google Play" else "See your subscriptions in Google Play",
+                    {
+                        val url = AppLinks.manageSubscriptionUrl(state.billing.activeProductId)
+                        if (!context.openExternal(url)) vm.showMessage("Couldn’t open Google Play")
+                    },
+                )
+            }
         }
 
         SectionLabel("App")

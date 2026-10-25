@@ -23,6 +23,11 @@ data class StudioUiState(
     val billing: BillingStatus = BillingStatus(),
     /** Demo checkout and "Preview Premium (demo)" exist only in debug builds. */
     val demoAllowed: Boolean = BuildConfig.DEBUG,
+    /**
+     * Premium entry points (header crown, Premium screen, Manage subscription). Debug builds only
+     * for now: Premium ships in a later update, so release builds don't advertise it yet.
+     */
+    val premiumVisible: Boolean = BuildConfig.DEBUG,
     /** Strobe/SOS is waiting on the flashing-lights warning; the dialog shows while this is set. */
     val flashWarningFor: LightMode? = null,
 ) {
