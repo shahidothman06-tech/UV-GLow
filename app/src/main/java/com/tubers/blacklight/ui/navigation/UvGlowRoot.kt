@@ -6,10 +6,17 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -20,9 +27,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -32,6 +41,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.tubers.blacklight.ui.components.BottomNav
 import com.tubers.blacklight.ui.components.NavItem
+import com.tubers.blacklight.ui.components.SideNav
 import com.tubers.blacklight.ui.components.SubHeader
 import com.tubers.blacklight.ui.components.TabHeader
 import com.tubers.blacklight.ui.components.UvIcons
@@ -61,6 +71,9 @@ object Routes {
     const val PREMIUM = "premium"
     const val INTRO = "intro"
 }
+
+/** Windows at least this wide in landscape get the side rail instead of the bottom bar. */
+private val RAIL_MIN_WIDTH = 560.dp
 
 private val Tabs = listOf(
     NavItem(Routes.HOME, "Home", UvIcons.NavHome),
@@ -103,8 +116,9 @@ fun UvGlowRoot(vm: StudioViewModel) {
         val route = backStack?.destination?.route
         val ground by animateColorAsState(accent.ground, tween(400), label = "ground")
 
-        // First launch starts on the welcome screen; later launches go straight to Home.
-        val startRoute = remember { if (state.prefs.introSeen) Routes.HOME else Routes.INTRO }
+        // First launch starts on the welcome screen; later launches go straight to Home. Saved so a
+        // rotation or window resize rebuilds the same graph the restored back stack belongs to.
+        val startRoute = rememberSaveable { if (state.prefs.introSeen) Routes.HOME else Routes.INTRO }
         // One-off events from the ViewModel.
         LaunchedEffect(Unit) {
             vm.uiEvents.collect { event ->
@@ -121,64 +135,82 @@ fun UvGlowRoot(vm: StudioViewModel) {
         val showChrome = route != null && route != Routes.INTRO
         val isSubScreen = route == Routes.TIMER || route == Routes.PREMIUM
 
-        Scaffold(
-            containerColor = ground,
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            topBar = {
-                if (showChrome) {
-                    if (isSubScreen) {
-                        SubHeader(if (route == Routes.TIMER) "Auto-off timer" else "Premium", onBack = { nav.popBackStack() })
-                    } else {
-                        TabHeader(onPremium = { nav.openScreen(Routes.PREMIUM) })
-                    }
+        // Side insets (landscape cutouts, 3-button nav on the side) pad the whole app once; the
+        // bars below then only take their top/bottom insets.
+        BoxWithConstraints(
+            Modifier
+                .fillMaxSize()
+                .background(ground)
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
+        ) {
+            // Landscape and wide windows use a side rail so content keeps its height.
+            val useRail = showChrome && maxWidth > maxHeight && maxWidth >= RAIL_MIN_WIDTH
+            Row(Modifier.fillMaxSize()) {
+                if (useRail) {
+                    SideNav(Tabs, selectedRoute = if (isSubScreen) null else route, onSelect = { nav.openTab(it.route) })
                 }
-            },
-            bottomBar = {
-                if (showChrome) {
-                    BottomNav(Tabs, selectedRoute = if (isSubScreen) null else route, onSelect = { nav.openTab(it.route) })
-                }
-            },
-            snackbarHost = {
-                SnackbarHost(snackbar) { data ->
-                    Snackbar(containerColor = UvColors.Text, contentColor = Color(0xFF140E1C)) {
-                        Text(data.visuals.message, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                    }
-                }
-            },
-        ) { padding ->
-            NavHost(
-                navController = nav,
-                startDestination = startRoute,
-                modifier = Modifier.padding(padding).imePadding(),
-                enterTransition = { fadeIn(tween(220)) },
-                exitTransition = { fadeOut(tween(180)) },
-            ) {
-                // Each destination reads state itself, so the graph builder captures only stable
-                // objects and isn't rebuilt while a slider is being dragged.
-                composable(Routes.HOME) {
-                    HomeScreen(
-                        vm.state(), vm,
-                        onOpenEffects = { nav.openTab(Routes.EFFECTS) },
-                        onOpenThemes = { nav.openTab(Routes.THEMES) },
-                        onOpenTimer = { nav.openScreen(Routes.TIMER) },
-                        onOpenPresets = { nav.openTab(Routes.PRESETS) },
-                    )
-                }
-                composable(Routes.EFFECTS) { EffectsScreen(vm.state(), vm, onOpenSettings = { nav.openTab(Routes.SETTINGS) }) }
-                composable(Routes.THEMES) { ThemesScreen(vm.state(), vm) }
-                composable(Routes.PRESETS) { PresetsScreen(vm.state(), vm) }
-                composable(Routes.SETTINGS) { SettingsScreen(vm.state(), vm, onReplayIntro = { nav.openScreen(Routes.INTRO) }) }
-                composable(Routes.TIMER) { TimerScreen(vm.state(), vm) }
-                composable(Routes.PREMIUM) { PremiumScreen(vm.state(), vm) }
-                composable(Routes.INTRO) {
-                    IntroScreen(onGetStarted = {
-                        vm.markIntroSeen()
-                        if (nav.previousBackStackEntry != null) {
-                            nav.popBackStack() // replayed from Settings
-                        } else {
-                            nav.navigate(Routes.HOME) { popUpTo(Routes.INTRO) { inclusive = true } }
+                Scaffold(
+                    modifier = Modifier.weight(1f),
+                    containerColor = ground,
+                    // Without a bottom bar, content keeps clear of the gesture/nav bar itself.
+                    contentWindowInsets = if (useRail) WindowInsets.navigationBars.only(WindowInsetsSides.Bottom) else WindowInsets(0, 0, 0, 0),
+                    topBar = {
+                        if (showChrome) {
+                            if (isSubScreen) {
+                                SubHeader(if (route == Routes.TIMER) "Auto-off timer" else "Premium", onBack = { nav.popBackStack() })
+                            } else {
+                                TabHeader(onPremium = { nav.openScreen(Routes.PREMIUM) })
+                            }
                         }
-                    })
+                    },
+                    bottomBar = {
+                        if (showChrome && !useRail) {
+                            BottomNav(Tabs, selectedRoute = if (isSubScreen) null else route, onSelect = { nav.openTab(it.route) })
+                        }
+                    },
+                    snackbarHost = {
+                        SnackbarHost(snackbar) { data ->
+                            Snackbar(containerColor = UvColors.Text, contentColor = Color(0xFF140E1C)) {
+                                Text(data.visuals.message, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                            }
+                        }
+                    },
+                ) { padding ->
+                    NavHost(
+                        navController = nav,
+                        startDestination = startRoute,
+                        modifier = Modifier.padding(padding).imePadding(),
+                        enterTransition = { fadeIn(tween(220)) },
+                        exitTransition = { fadeOut(tween(180)) },
+                    ) {
+                        // Each destination reads state itself, so the graph builder captures only stable
+                        // objects and isn't rebuilt while a slider is being dragged.
+                        composable(Routes.HOME) {
+                            HomeScreen(
+                                vm.state(), vm,
+                                onOpenEffects = { nav.openTab(Routes.EFFECTS) },
+                                onOpenThemes = { nav.openTab(Routes.THEMES) },
+                                onOpenTimer = { nav.openScreen(Routes.TIMER) },
+                                onOpenPresets = { nav.openTab(Routes.PRESETS) },
+                            )
+                        }
+                        composable(Routes.EFFECTS) { EffectsScreen(vm.state(), vm, onOpenSettings = { nav.openTab(Routes.SETTINGS) }) }
+                        composable(Routes.THEMES) { ThemesScreen(vm.state(), vm) }
+                        composable(Routes.PRESETS) { PresetsScreen(vm.state(), vm) }
+                        composable(Routes.SETTINGS) { SettingsScreen(vm.state(), vm, onReplayIntro = { nav.openScreen(Routes.INTRO) }) }
+                        composable(Routes.TIMER) { TimerScreen(vm.state(), vm) }
+                        composable(Routes.PREMIUM) { PremiumScreen(vm.state(), vm) }
+                        composable(Routes.INTRO) {
+                            IntroScreen(onGetStarted = {
+                                vm.markIntroSeen()
+                                if (nav.previousBackStackEntry != null) {
+                                    nav.popBackStack() // replayed from Settings
+                                } else {
+                                    nav.navigate(Routes.HOME) { popUpTo(Routes.INTRO) { inclusive = true } }
+                                }
+                            })
+                        }
+                    }
                 }
             }
         }

@@ -45,6 +45,7 @@ import com.tubers.blacklight.ui.components.Tag
 import com.tubers.blacklight.ui.components.UvIcons
 import com.tubers.blacklight.ui.components.UvPanel
 import com.tubers.blacklight.ui.components.UvTextField
+import com.tubers.blacklight.ui.components.readableWidth
 import com.tubers.blacklight.ui.components.verticalFadeEdges
 import com.tubers.blacklight.ui.state.StudioUiState
 import com.tubers.blacklight.ui.state.StudioViewModel
@@ -64,6 +65,7 @@ fun PresetsScreen(state: StudioUiState, vm: StudioViewModel) {
             .fillMaxSize()
             .verticalFadeEdges()
             .verticalScroll(rememberScrollState())
+            .readableWidth()
             .padding(horizontal = 20.dp)
             .padding(top = 4.dp, bottom = 24.dp),
     ) {

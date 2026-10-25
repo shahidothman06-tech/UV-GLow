@@ -59,8 +59,9 @@ private const val LENS_Y = 190f
  * The Home screen's flashlight and beam, drawn with Canvas so every setting changes the light
  * immediately: power, color, brightness, beam width, glow radius, mode and speed.
  *
- * Drawing happens in design units (1 unit = 1 dp) with the torch centered horizontally, so the
- * torch keeps its size on every phone width; only the glow at the edges is cropped.
+ * Drawing happens in design units with the torch centered horizontally. The scene scales with the
+ * stage's height (a [STAGE_HEIGHT]-dp-tall stage draws 1 unit = 1 dp), so a shorter landscape pane
+ * or a taller tablet stage shows the whole torch; only the glow at the side edges is cropped.
  */
 @Composable
 fun FlashlightStage(
@@ -99,7 +100,7 @@ fun FlashlightStage(
         val t = clock.floatValue // read in draw scope: invalidates drawing only
         val modeAlpha = if (animate) ModeAnimation.alpha(mode, t / cycle) else 1f
         val rayAngle = if (animate) -14f * cos(2f * Math.PI.toFloat() * (t / raysCycle)) else 0f
-        val u = density // px per design unit (dp)
+        val u = size.height / STAGE_HEIGHT // px per design unit
 
         translate(left = size.width / 2f - CX * u) {
             scale(u, u, pivot = Offset.Zero) {

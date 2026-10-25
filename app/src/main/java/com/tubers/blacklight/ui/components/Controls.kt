@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -61,6 +63,18 @@ import com.tubers.blacklight.ui.theme.UvColors
 import com.tubers.blacklight.ui.theme.UvRadius
 import com.tubers.blacklight.ui.theme.UvType
 import kotlin.math.roundToInt
+
+/** Widest a single column of content gets; wider windows center it instead of stretching. */
+val ReadableWidth: Dp = 640.dp
+
+/**
+ * Centers content and caps it at [ReadableWidth] on tablets and in landscape. Put it after
+ * `verticalScroll` so the whole window still scrolls, not just the centered column.
+ */
+fun Modifier.readableWidth(max: Dp = ReadableWidth): Modifier = this
+    .fillMaxWidth()
+    .wrapContentWidth(Alignment.CenterHorizontally)
+    .widthIn(max = max)
 
 /** Soft fade at the top and bottom of a scroll area instead of a hard cut under the bars. */
 fun Modifier.verticalFadeEdges(top: Dp = 14.dp, bottom: Dp = 18.dp): Modifier = this

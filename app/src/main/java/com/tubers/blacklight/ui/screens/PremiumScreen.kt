@@ -52,6 +52,7 @@ import com.tubers.blacklight.ui.components.GhostButton
 import com.tubers.blacklight.ui.components.SectionLabel
 import com.tubers.blacklight.ui.components.SwitchRow
 import com.tubers.blacklight.ui.components.UvPanel
+import com.tubers.blacklight.ui.components.readableWidth
 import com.tubers.blacklight.ui.components.verticalFadeEdges
 import com.tubers.blacklight.ui.state.StudioUiState
 import com.tubers.blacklight.ui.state.StudioViewModel
@@ -81,6 +82,7 @@ fun PremiumScreen(state: StudioUiState, vm: StudioViewModel) {
             .fillMaxSize()
             .verticalFadeEdges()
             .verticalScroll(rememberScrollState())
+            .readableWidth()
             .padding(horizontal = 20.dp)
             .padding(top = 4.dp, bottom = 24.dp),
     ) {

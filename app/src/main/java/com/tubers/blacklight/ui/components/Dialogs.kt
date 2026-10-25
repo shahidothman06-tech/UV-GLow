@@ -2,6 +2,8 @@ package com.tubers.blacklight.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -101,9 +103,10 @@ fun ColorPickerDialog(
     onDismiss: () -> Unit,
 ) {
     val start = remember(initialArgb) { ColorMath.argbToHsv(initialArgb) }
-    var hue by remember { mutableFloatStateOf(start[0]) }
-    var sat by remember { mutableFloatStateOf(start[1].coerceIn(0.2f, 1f)) }
-    var value by remember { mutableFloatStateOf(start[2].coerceIn(0.35f, 1f)) }
+    // Saveable so a half-picked color survives rotation and window resizes.
+    var hue by rememberSaveable { mutableFloatStateOf(start[0]) }
+    var sat by rememberSaveable { mutableFloatStateOf(start[1].coerceIn(0.2f, 1f)) }
+    var value by rememberSaveable { mutableFloatStateOf(start[2].coerceIn(0.35f, 1f)) }
     val argb = ColorMath.hsvToArgb(hue, sat, value)
     val accent = LocalAccent.current
 
@@ -112,7 +115,7 @@ fun ColorPickerDialog(
         containerColor = UvColors.Surface,
         title = { Text("Custom color", color = UvColors.Text, fontSize = 18.sp, fontWeight = FontWeight.SemiBold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Box(
                         Modifier

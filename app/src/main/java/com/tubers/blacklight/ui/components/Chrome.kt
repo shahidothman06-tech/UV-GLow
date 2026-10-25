@@ -12,22 +12,28 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -142,6 +148,51 @@ fun BottomNav(items: List<NavItem>, selectedRoute: String?, onSelect: (NavItem) 
                 }
             }
         }
+    }
+}
+
+/**
+ * Side navigation rail used in landscape and on wide windows, where a bottom bar would eat the
+ * little vertical space there is. Same items and selection style as [BottomNav], turned sideways.
+ */
+@Composable
+fun SideNav(items: List<NavItem>, selectedRoute: String?, onSelect: (NavItem) -> Unit, modifier: Modifier = Modifier) {
+    val accent = LocalAccent.current
+    Row(modifier.fillMaxHeight().background(UvColors.NavBackground)) {
+        Column(
+            Modifier
+                .width(80.dp)
+                .fillMaxHeight()
+                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical))
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
+        ) {
+            items.forEach { item ->
+                val selected = item.route == selectedRoute
+                val color by animateColorAsState(if (selected) accent.text else UvColors.TextMuted, label = "rail")
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 60.dp)
+                        .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(item) }),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (selected) {
+                        Box(
+                            Modifier
+                                .align(Alignment.CenterStart)
+                                .size(width = 3.dp, height = 20.dp)
+                                .background(accent.color, RoundedCornerShape(topEnd = 3.dp, bottomEnd = 3.dp))
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(item.icon, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
+                        Text(item.label, fontSize = 10.sp, fontWeight = FontWeight.Medium, color = color, maxLines = 1)
+                    }
+                }
+            }
+        }
+        VerticalDivider(color = UvColors.Divider, thickness = 1.dp)
     }
 }
 
