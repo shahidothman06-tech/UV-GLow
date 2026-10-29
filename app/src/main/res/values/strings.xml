@@ -35,4 +35,5 @@
     <string name="privacy_contact_heading">Contact</string>
     <!-- %1$s is AppLinks.CONTACT_EMAIL. -->
     <string name="privacy_contact_body">%1$s</string>
+    <string name="press_back_again_to_exit">Press back again to exit</string>
 </resources>

@@ -1,5 +1,7 @@
 package com.tubers.blacklight.ui.navigation
 
+import android.os.SystemClock
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -27,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -46,6 +49,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.tubers.blacklight.R
 import com.tubers.blacklight.ads.AdaptiveBanner
 import com.tubers.blacklight.ui.components.BottomNav
 import com.tubers.blacklight.ui.components.FlashWarningDialog
@@ -106,6 +110,9 @@ object Routes {
 
 /** Windows at least this wide in landscape get the side rail instead of the bottom bar. */
 private val RAIL_MIN_WIDTH = 560.dp
+
+/** Two Back presses on Home within this window close the app. */
+private const val EXIT_WINDOW_MS = 2_000L
 
 private val Tabs = listOf(
     NavItem(Routes.HOME, "Home", UvIcons.NavHome),
@@ -169,16 +176,11 @@ fun UvGlowRoot(vm: StudioViewModel) {
             }
         }
 
-        // Back on Home would close the app: free users see Premium first, and backing out of that
-        // closes the app. Leaving Premium any other way, or subscribing, cancels it.
         val context = LocalContext.current
-        var exitPaywall by rememberSaveable { mutableStateOf(false) }
-        LaunchedEffect(route, state.isPremium) {
-            if (route != Routes.PREMIUM || state.isPremium) exitPaywall = false
-        }
-        val showExitPaywall = state.premiumVisible && !state.isPremium
-        val closeExitPaywall: () -> Unit = { context.findActivity()?.finish() }
-        val closePremium: () -> Unit = { if (exitPaywall) closeExitPaywall() else nav.popBackStack() }
+        val offerPremium = state.premiumVisible && !state.isPremium
+        val closePremium: () -> Unit = { nav.popBackStack() }
+        // Back on Home closes the app only when pressed twice within EXIT_WINDOW_MS.
+        var lastHomeBackAt by remember { mutableLongStateOf(0L) }
 
         // Free users see Premium once each time the app is opened, as soon as Home shows. It waits
         // for Play to report owned purchases so subscribers never see it.
@@ -187,7 +189,7 @@ fun UvGlowRoot(vm: StudioViewModel) {
         LaunchedEffect(route, billingSettled) {
             if (!launchPaywallDone && route == Routes.HOME && billingSettled) {
                 launchPaywallDone = true
-                if (showExitPaywall) nav.openScreen(Routes.PREMIUM)
+                if (offerPremium) nav.openScreen(Routes.PREMIUM)
             }
         }
         // One-off events from the ViewModel.
@@ -278,9 +280,14 @@ fun UvGlowRoot(vm: StudioViewModel) {
                         // Each destination reads state itself, so the graph builder captures only stable
                         // objects and isn't rebuilt while a slider is being dragged.
                         composable(Routes.HOME) {
-                            BackHandler(enabled = showExitPaywall) {
-                                exitPaywall = true
-                                nav.openScreen(Routes.PREMIUM)
+                            BackHandler {
+                                val now = SystemClock.elapsedRealtime()
+                                if (now - lastHomeBackAt < EXIT_WINDOW_MS) {
+                                    context.findActivity()?.finish()
+                                } else {
+                                    lastHomeBackAt = now
+                                    Toast.makeText(context, R.string.press_back_again_to_exit, Toast.LENGTH_SHORT).show()
+                                }
                             }
                             HomeScreen(
                                 vm.state(), vm,
@@ -303,7 +310,6 @@ fun UvGlowRoot(vm: StudioViewModel) {
                         }
                         composable(Routes.TIMER) { TimerScreen(vm.state(), vm) }
                         composable(Routes.PREMIUM) {
-                            BackHandler(enabled = exitPaywall) { closeExitPaywall() }
                             PremiumScreen(vm.state(), vm, onClose = closePremium)
                         }
                         composable(Routes.PRIVACY) {
