@@ -52,7 +52,8 @@ fun SettingsScreen(
     vm: StudioViewModel,
     onReplayIntro: () -> Unit,
     onOpenPrivacy: () -> Unit,
-    onOpenLanguage: () -> Unit,
+    /** Null hides the Language row (release builds until translations exist). */
+    onOpenLanguage: (() -> Unit)?,
 ) {
     var confirmReset by rememberSaveable { mutableStateOf(false) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
@@ -99,7 +100,7 @@ fun SettingsScreen(
             )
         }
 
-        // Shown with Premium itself (debug builds only until Premium ships).
+        // Shown with Premium itself (release builds need a product ID).
         if (state.premiumVisible) {
             SectionLabel("Subscription")
             UvPanel(contentPadding = groupPadding) {
@@ -117,10 +118,12 @@ fun SettingsScreen(
 
         SectionLabel("App")
         UvPanel(contentPadding = groupPadding) {
-            NavRow(
-                UvIcons.Globe, "Language",
-                (AppLanguages.find(state.prefs.languageTag) ?: AppLanguages.all.first()).nativeName, onOpenLanguage,
-            )
+            if (onOpenLanguage != null) {
+                NavRow(
+                    UvIcons.Globe, "Language",
+                    (AppLanguages.find(state.prefs.languageTag) ?: AppLanguages.all.first()).nativeName, onOpenLanguage,
+                )
+            }
             NavRow(UvIcons.Refresh, "Replay splash screen", "See the welcome screen again", onReplayIntro)
             HorizontalDivider(color = UvColors.Divider)
             if (!confirmReset) {

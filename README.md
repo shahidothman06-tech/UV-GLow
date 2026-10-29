@@ -151,8 +151,10 @@ Play Billing Library 9.1 (`PlayBillingGateway`):
 
 **Debug builds** without product IDs run a clearly labelled demo: "Continue · demo checkout" never
 charges, and *Preview Premium (demo)* unlocks features locally. **Release builds** never show either.
-If product IDs are missing or Google Play Billing is unavailable, the Premium screen shows an error
-and no checkout. A preview flag left over from a debug install is ignored.
+A release built **without** `uvglow.billing.monthlyProductId` hides Premium completely (no crown,
+paywall or Manage subscription; `BuildConfig.PREMIUM_ENABLED`). With an ID set, Premium shows; if
+Google Play Billing is unavailable the Premium screen shows an error and no checkout. A preview flag
+left over from a debug install is ignored.
 
 To go live:
 
@@ -166,10 +168,36 @@ To go live:
 4. **Recommended:** verify purchase tokens on your own server (Play Developer API) before granting
    entitlement. The app acknowledges purchases client-side, which is Play's minimum requirement.
 
+## Language
+
+The language screen (first launch and *Settings › Language*) only appears in **debug** builds for
+now, because the UI text isn't translated yet. Once the strings are moved to `strings.xml` and
+translated, set `LANGUAGE_PICKER_ENABLED` to `true` for release in `app/build.gradle.kts`.
+
+## Release build (GitHub Actions)
+
+`.github/workflows/release-aab.yml` builds the signed `.aab` for Play. Run it from
+*Actions › Release AAB › Run workflow* (or push a `v*` tag) and download the **UVGlow-release-aab**
+artifact. It needs these in *Settings › Secrets and variables › Actions*:
+
+| Name | Kind | Value |
+|---|---|---|
+| `UVGLOW_KEYSTORE_BASE64` | secret | the upload keystore, base64 on one line |
+| `UVGLOW_STORE_PASSWORD` | secret | keystore password |
+| `UVGLOW_KEY_ALIAS` | secret | key alias |
+| `UVGLOW_KEY_PASSWORD` | secret | key password |
+| `UVGLOW_MONTHLY_PRODUCT_ID` | variable | Play subscription product ID (blank hides Premium) |
+| `ADMOB_APP_ID`, `ADMOB_BANNER_ID` | variable | real AdMob IDs (blank ships without ads) |
+
+`versionCode` is 100 + the workflow run number unless you type one when starting the run; it must be
+higher than the last upload. The R8 mapping file is uploaded as **UVGlow-release-mapping** (attach it
+in Play Console for readable crash reports). Local release builds read the same values from
+`~/.gradle/gradle.properties` (`UVGLOW_STORE_FILE` etc.).
+
 ## Production release checklist
 
-- [ ] Create an upload keystore and add a `signingConfig` for `release` (never commit the keystore).
-- [ ] Bump `versionCode` / `versionName` in `app/build.gradle.kts`.
+- [ ] Create an upload keystore (never commit it) and add it as the signing secrets above.
+- [ ] Bump `versionName` in `app/build.gradle.kts` for each release (CI sets `versionCode`).
 - [x] Launcher icon: vector adaptive icon (`drawable/ic_launcher_foreground.xml`, dark background,
       `ic_launcher_monochrome.xml` for themed icons) redrawn from `docs/icon-512.png`, artwork inside
       the 66dp safe zone. Upload `docs/icon-512.png` as the Play Store icon (512 × 512 PNG).

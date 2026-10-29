@@ -5,7 +5,11 @@ plugins {
 }
 
 // Billing product IDs come from gradle.properties (or -P on the command line).
-val monthlyProductId: String = (findProperty("uvglow.billing.monthlyProductId") as String?).orEmpty()
+val monthlyProductId: String = (findProperty("uvglow.billing.monthlyProductId") as String?).orEmpty().trim()
+
+// Play needs a higher versionCode for every upload. CI passes -Puvglow.versionCode (from the run
+// number); local builds fall back to the value below.
+val appVersionCode: Int = (findProperty("uvglow.versionCode") as String?)?.trim()?.toIntOrNull() ?: 1
 
 // AdMob IDs for release builds come from gradle.properties (ADMOB_APP_ID, ADMOB_BANNER_ID).
 // Debug builds always use Google's official test IDs, so real ads are never loaded while testing.
@@ -31,6 +35,9 @@ if (gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = tr
         logger.warn("WARNING: UV Glow release is NOT signed - set UVGLOW_STORE_FILE, UVGLOW_STORE_PASSWORD, " +
             "UVGLOW_KEY_ALIAS and UVGLOW_KEY_PASSWORD in ~/.gradle/gradle.properties (and check the keystore exists).")
     }
+    if (monthlyProductId.isBlank()) {
+        logger.warn("WARNING: uvglow.billing.monthlyProductId is blank - this UV Glow release hides Premium entirely.")
+    }
     if (admobAppId.isBlank() || admobBannerId.isBlank()) {
         logger.warn("WARNING: ADMOB_APP_ID or ADMOB_BANNER_ID is blank - this UV Glow release will show NO ads. " +
             "Set both in gradle.properties to enable AdMob.")
@@ -45,13 +52,17 @@ android {
         applicationId = "com.tubers.blacklight"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
+        versionCode = appVersionCode
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
 
         buildConfigField("String", "BILLING_MONTHLY_ID", "\"$monthlyProductId\"")
+        // Premium (crown, paywall, Manage subscription) shows in release only once a real product ID is set.
+        buildConfigField("boolean", "PREMIUM_ENABLED", "${monthlyProductId.isNotBlank()}")
+        // No translations yet: release builds skip the language screen. Set true once strings are translated.
+        buildConfigField("boolean", "LANGUAGE_PICKER_ENABLED", "false")
     }
 
     signingConfigs {
@@ -85,6 +96,9 @@ android {
         }
         debug {
             versionNameSuffix = "-debug"
+            // Debug always shows Premium (demo checkout without a product ID) and the language screen.
+            buildConfigField("boolean", "PREMIUM_ENABLED", "true")
+            buildConfigField("boolean", "LANGUAGE_PICKER_ENABLED", "true")
             manifestPlaceholders["admobAppId"] = testAdmobAppId
             buildConfigField("String", "ADMOB_APP_ID", "\"$testAdmobAppId\"")
             buildConfigField("String", "ADMOB_BANNER_ID", "\"$testAdmobBannerId\"")

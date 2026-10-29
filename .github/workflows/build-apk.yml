@@ -34,8 +34,8 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Unit tests and debug APK
-        run: ./gradlew testDebugUnitTest assembleDebug --no-daemon --stacktrace
+      - name: Unit tests, debug APK and unsigned release bundle (checks R8 and the release config)
+        run: ./gradlew testDebugUnitTest assembleDebug bundleRelease --no-daemon --stacktrace
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
