@@ -18,3 +18,4 @@ keystore.properties
 
 # Python venv for docs/store/make_store_images.py
 .venv/
+keystore-base64.txt
