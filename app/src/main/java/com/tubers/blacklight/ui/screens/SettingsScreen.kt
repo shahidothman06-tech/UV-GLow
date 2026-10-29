@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tubers.blacklight.AppLinks
 import com.tubers.blacklight.BuildConfig
+import com.tubers.blacklight.domain.model.AppLanguages
 import com.tubers.blacklight.ui.components.AccentButton
 import com.tubers.blacklight.ui.components.MiniButton
 import com.tubers.blacklight.ui.components.NavRow
@@ -46,7 +47,13 @@ import com.tubers.blacklight.ui.state.StudioViewModel
 import com.tubers.blacklight.ui.theme.UvColors
 
 @Composable
-fun SettingsScreen(state: StudioUiState, vm: StudioViewModel, onReplayIntro: () -> Unit, onOpenPrivacy: () -> Unit) {
+fun SettingsScreen(
+    state: StudioUiState,
+    vm: StudioViewModel,
+    onReplayIntro: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+    onOpenLanguage: () -> Unit,
+) {
     var confirmReset by rememberSaveable { mutableStateOf(false) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
     val groupPadding = PaddingValues(horizontal = 14.dp, vertical = 2.dp)
@@ -110,6 +117,10 @@ fun SettingsScreen(state: StudioUiState, vm: StudioViewModel, onReplayIntro: () 
 
         SectionLabel("App")
         UvPanel(contentPadding = groupPadding) {
+            NavRow(
+                UvIcons.Globe, "Language",
+                (AppLanguages.find(state.prefs.languageTag) ?: AppLanguages.all.first()).nativeName, onOpenLanguage,
+            )
             NavRow(UvIcons.Refresh, "Replay splash screen", "See the welcome screen again", onReplayIntro)
             HorizontalDivider(color = UvColors.Divider)
             if (!confirmReset) {

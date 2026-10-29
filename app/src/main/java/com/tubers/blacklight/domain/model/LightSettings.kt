@@ -38,6 +38,8 @@ data class AppPreferences(
     val introSeen: Boolean = false,
     /** The user has read and accepted the flashing-lights / photosensitive epilepsy warning. */
     val flashWarningAccepted: Boolean = false,
+    /** BCP 47 tag picked on the language screen; null until the user has picked one. */
+    val languageTag: String? = null,
 )
 
 /** The five built-in light colors. */

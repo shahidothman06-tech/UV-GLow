@@ -78,12 +78,14 @@ class PlayBillingGateway(
                         connected = ok,
                         unavailable = !ok && result.responseCode in UNAVAILABLE_CODES,
                         lastError = if (ok) null else messageFor(result, "Couldn't connect to Google Play"),
+                        purchasesChecked = it.purchasesChecked || !ok,
                     )
                 }
                 // Restore on launch: owned subscriptions are re-read every time the app connects.
                 if (ok) scope.launch {
                     loadProducts()
                     refreshPurchases()
+                    _status.update { it.copy(purchasesChecked = true) }
                 }
             }
 

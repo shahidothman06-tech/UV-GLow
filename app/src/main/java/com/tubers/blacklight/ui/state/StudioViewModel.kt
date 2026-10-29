@@ -395,6 +395,8 @@ class StudioViewModel(
 
     fun markIntroSeen() = prefs.update { it.copy(introSeen = true) }
 
+    fun setLanguage(tag: String) = prefs.update { it.copy(languageTag = tag) }
+
     /** Restores the default look and comfort settings. Presets and themes are kept. */
     fun resetSettings() {
         light.value = StudioLogic.reset()

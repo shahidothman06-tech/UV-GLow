@@ -55,9 +55,11 @@ import com.tubers.blacklight.ui.components.SideNav
 import com.tubers.blacklight.ui.components.SubHeader
 import com.tubers.blacklight.ui.components.TabHeader
 import com.tubers.blacklight.ui.components.UvIcons
+import com.tubers.blacklight.ui.components.applyAppLanguage
 import com.tubers.blacklight.ui.screens.EffectsScreen
 import com.tubers.blacklight.ui.screens.HomeScreen
 import com.tubers.blacklight.ui.screens.IntroScreen
+import com.tubers.blacklight.ui.screens.LanguageScreen
 import com.tubers.blacklight.ui.screens.PremiumScreen
 import com.tubers.blacklight.ui.screens.PresetsScreen
 import com.tubers.blacklight.ui.screens.PrivacyPolicyScreen
@@ -82,6 +84,10 @@ object Routes {
     const val PREMIUM = "premium"
     const val PRIVACY = "privacy"
     const val INTRO = "intro"
+    const val LANGUAGE = "language"
+
+    /** Full-screen pages drawn without the header and tab bar. */
+    fun isFullScreen(route: String?): Boolean = route in setOf(INTRO, LANGUAGE, PREMIUM)
 
     /**
      * Header title for screens opened on top of a tab (they get a back button and no tab is
@@ -152,9 +158,16 @@ fun UvGlowRoot(vm: StudioViewModel) {
         val route = backStack?.destination?.route
         val ground by animateColorAsState(accent.ground, tween(400), label = "ground")
 
-        // First launch starts on the welcome screen; later launches go straight to Home. Saved so a
-        // rotation or window resize rebuilds the same graph the restored back stack belongs to.
-        val startRoute = rememberSaveable { if (state.prefs.introSeen) Routes.HOME else Routes.INTRO }
+        // First launch starts on the language screen, then the welcome screen; later launches go
+        // straight to Home. Saved so a rotation, window resize or language change rebuilds the
+        // same graph the restored back stack belongs to.
+        val startRoute = rememberSaveable {
+            when {
+                state.prefs.languageTag == null -> Routes.LANGUAGE
+                !state.prefs.introSeen -> Routes.INTRO
+                else -> Routes.HOME
+            }
+        }
 
         // Back on Home would close the app: free users see Premium first, and backing out of that
         // closes the app. Leaving Premium any other way, or subscribing, cancels it.
@@ -165,6 +178,18 @@ fun UvGlowRoot(vm: StudioViewModel) {
         }
         val showExitPaywall = state.premiumVisible && !state.isPremium
         val closeExitPaywall: () -> Unit = { context.findActivity()?.finish() }
+        val closePremium: () -> Unit = { if (exitPaywall) closeExitPaywall() else nav.popBackStack() }
+
+        // Free users see Premium once each time the app is opened, as soon as Home shows. It waits
+        // for Play to report owned purchases so subscribers never see it.
+        var launchPaywallDone by rememberSaveable { mutableStateOf(false) }
+        val billingSettled = !state.billing.configured || state.billing.purchasesChecked || state.billing.unavailable
+        LaunchedEffect(route, billingSettled) {
+            if (!launchPaywallDone && route == Routes.HOME && billingSettled) {
+                launchPaywallDone = true
+                if (showExitPaywall) nav.openScreen(Routes.PREMIUM)
+            }
+        }
         // One-off events from the ViewModel.
         LaunchedEffect(Unit) {
             vm.uiEvents.collect { event ->
@@ -183,7 +208,7 @@ fun UvGlowRoot(vm: StudioViewModel) {
             FlashWarningDialog(mode.displayName, onContinue = vm::acceptFlashWarning, onCancel = vm::declineFlashWarning)
         }
 
-        val showChrome = route != null && route != Routes.INTRO
+        val showChrome = route != null && !Routes.isFullScreen(route)
         val subScreenTitle = Routes.subScreenTitle(route)
         val isSubScreen = subScreenTitle != null
 
@@ -212,9 +237,7 @@ fun UvGlowRoot(vm: StudioViewModel) {
                     topBar = {
                         if (showChrome) {
                             if (isSubScreen) {
-                                SubHeader(subScreenTitle.orEmpty(), onBack = {
-                                    if (exitPaywall && route == Routes.PREMIUM) closeExitPaywall() else nav.popBackStack()
-                                })
+                                SubHeader(subScreenTitle.orEmpty(), onBack = { nav.popBackStack() })
                             } else {
                                 TabHeader(onPremium = if (state.premiumVisible) ({ nav.openScreen(Routes.PREMIUM) }) else null)
                             }
@@ -274,18 +297,39 @@ fun UvGlowRoot(vm: StudioViewModel) {
                             SettingsScreen(
                                 vm.state(), vm,
                                 onReplayIntro = { nav.openScreen(Routes.INTRO) },
+                                onOpenLanguage = { nav.openScreen(Routes.LANGUAGE) },
                                 onOpenPrivacy = { nav.openScreen(Routes.PRIVACY) },
                             )
                         }
                         composable(Routes.TIMER) { TimerScreen(vm.state(), vm) }
                         composable(Routes.PREMIUM) {
                             BackHandler(enabled = exitPaywall) { closeExitPaywall() }
-                            PremiumScreen(vm.state(), vm)
+                            PremiumScreen(vm.state(), vm, onClose = closePremium)
                         }
                         composable(Routes.PRIVACY) {
                             PrivacyPolicyScreen(
                                 onBack = { nav.popBackStack() },
                                 onLinkFailed = { vm.showMessage("No app found to open that link") },
+                            )
+                        }
+                        composable(Routes.LANGUAGE) {
+                            val firstRun = nav.previousBackStackEntry == null
+                            val goBack: () -> Unit = { nav.popBackStack() }
+                            val prefs = vm.state().prefs
+                            LanguageScreen(
+                                currentTag = prefs.languageTag,
+                                onBack = if (firstRun) null else goBack,
+                                onContinue = { tag ->
+                                    vm.setLanguage(tag)
+                                    if (firstRun) {
+                                        nav.navigate(if (prefs.introSeen) Routes.HOME else Routes.INTRO) {
+                                            popUpTo(Routes.LANGUAGE) { inclusive = true }
+                                        }
+                                    } else {
+                                        nav.popBackStack()
+                                    }
+                                    context.applyAppLanguage(tag)
+                                },
                             )
                         }
                         composable(Routes.INTRO) {

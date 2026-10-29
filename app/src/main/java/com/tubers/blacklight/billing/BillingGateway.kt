@@ -26,6 +26,11 @@ data class BillingStatus(
     /** Plans Play couldn't return (not published, wrong ID, or not sold in this country). */
     val unavailablePlans: Set<PlanType> = emptySet(),
     val lastError: String? = null,
+    /**
+     * Owned purchases have been read from Play at least once this launch (or setup failed, so
+     * they can't be). Until then a subscriber can't be told apart from a free user.
+     */
+    val purchasesChecked: Boolean = false,
 )
 
 sealed interface PurchaseOutcome {
