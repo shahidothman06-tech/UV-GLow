@@ -176,6 +176,10 @@ translated, set `LANGUAGE_PICKER_ENABLED` to `true` for release in `app/build.gr
 
 ## Release build (GitHub Actions)
 
+First run `powershell -ExecutionPolicy Bypass -File scripts\make-upload-keystore.ps1` on Windows: it
+asks for the alias, password and product ID, creates `%USERPROFILE%\upload-keystore.jks` plus a
+base64 copy, sets the product ID in `gradle.properties`, and lists the secrets below to paste in.
+
 `.github/workflows/release-aab.yml` builds the signed `.aab` for Play. Run it from
 *Actions › Release AAB › Run workflow* (or push a `v*` tag) and download the **UVGlow-release-aab**
 artifact. It needs these in *Settings › Secrets and variables › Actions*:
@@ -186,7 +190,7 @@ artifact. It needs these in *Settings › Secrets and variables › Actions*:
 | `UVGLOW_STORE_PASSWORD` | secret | keystore password |
 | `UVGLOW_KEY_ALIAS` | secret | key alias |
 | `UVGLOW_KEY_PASSWORD` | secret | key password |
-| `UVGLOW_MONTHLY_PRODUCT_ID` | variable | Play subscription product ID (blank hides Premium) |
+| `UVGLOW_MONTHLY_PRODUCT_ID` | variable | optional; overrides the product ID in `gradle.properties` |
 | `ADMOB_APP_ID`, `ADMOB_BANNER_ID` | variable | real AdMob IDs (blank ships without ads) |
 
 `versionCode` is 100 + the workflow run number unless you type one when starting the run; it must be
