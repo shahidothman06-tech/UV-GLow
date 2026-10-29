@@ -16,12 +16,17 @@ class RoutesTest {
 
     @Test fun bannersOnlyOnEffectsThemesPresetsAndSettings() {
         listOf(Routes.EFFECTS, Routes.THEMES, Routes.PRESETS, Routes.SETTINGS).forEach { assertTrue(it, Routes.showsBanner(it)) }
-        listOf(Routes.HOME, Routes.TIMER, Routes.PREMIUM, Routes.PRIVACY, Routes.INTRO, null)
+        listOf(Routes.HOME, Routes.TIMER, Routes.PREMIUM, Routes.PRIVACY, Routes.INTRO, Routes.LANGUAGE, null)
             .forEach { assertFalse("$it", Routes.showsBanner(it)) }
     }
 
     @Test fun tabsAndIntroAreNotSubScreens() {
         listOf(Routes.HOME, Routes.EFFECTS, Routes.THEMES, Routes.PRESETS, Routes.SETTINGS, Routes.INTRO, null)
             .forEach { assertNull(it, Routes.subScreenTitle(it)) }
+    }
+
+    @Test fun paywallLanguageAndIntroAreFullScreen() {
+        listOf(Routes.PREMIUM, Routes.LANGUAGE, Routes.INTRO).forEach { assertTrue(it, Routes.isFullScreen(it)) }
+        listOf(Routes.HOME, Routes.SETTINGS, Routes.TIMER, Routes.PRIVACY, null).forEach { assertFalse("$it", Routes.isFullScreen(it)) }
     }
 }

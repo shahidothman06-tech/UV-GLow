@@ -53,6 +53,14 @@ object UvIcons {
     val Bolt = stroke("bolt", "M13 3L5 13h6l-1 8 8-10h-6z")
     val Refresh = stroke("refresh", "M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5")
     val ChevronRight = stroke("chevron", "M9 5l7 7-7 7")
+    val ArrowRight = stroke("arrow_right", "M5 12h14M13 6l6 6-6 6", width = 2.2f)
+    val Globe = stroke("globe", circle(12f, 12f, 9f), "M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z")
+    val Search = stroke("search", circle(11f, 11f, 7f), "M20 20l-4-4")
+    val Palette = stroke(
+        "palette",
+        "M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.9-.6-1.3-.6-2.2 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z",
+        circle(7.5f, 11f, 1.2f), circle(10.5f, 7f, 1.2f), circle(15f, 7.5f, 1.2f),
+    )
     val Shield = stroke("shield", "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z")
     val Timer = stroke("timer", circle(12f, 13f, 8f), "M12 9v4l2.5 2.5M9 2h6")
 

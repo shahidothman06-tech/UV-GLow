@@ -44,6 +44,7 @@ class DataStoreSettingsRepository(context: Context) : SettingsRepository {
         val PREMIUM_PREVIEW = booleanPreferencesKey("premium_preview_demo")
         val INTRO_SEEN = booleanPreferencesKey("intro_seen")
         val FLASH_WARNING_ACCEPTED = booleanPreferencesKey("flash_warning_accepted")
+        val LANGUAGE = stringPreferencesKey("language_tag")
     }
 
     /** A disk read error must not crash the app: fall back to defaults. */
@@ -106,6 +107,7 @@ class DataStoreSettingsRepository(context: Context) : SettingsRepository {
         premiumPreview = this[Keys.PREMIUM_PREVIEW] ?: false,
         introSeen = this[Keys.INTRO_SEEN] ?: false,
         flashWarningAccepted = this[Keys.FLASH_WARNING_ACCEPTED] ?: false,
+        languageTag = this[Keys.LANGUAGE]?.takeIf { it.isNotBlank() },
     )
 
     private fun MutablePreferences.writeAppPreferences(a: AppPreferences) {
@@ -114,5 +116,6 @@ class DataStoreSettingsRepository(context: Context) : SettingsRepository {
         this[Keys.PREMIUM_PREVIEW] = a.premiumPreview
         this[Keys.INTRO_SEEN] = a.introSeen
         this[Keys.FLASH_WARNING_ACCEPTED] = a.flashWarningAccepted
+        if (a.languageTag != null) this[Keys.LANGUAGE] = a.languageTag else remove(Keys.LANGUAGE)
     }
 }
