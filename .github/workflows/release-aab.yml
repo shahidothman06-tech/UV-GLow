@@ -60,7 +60,19 @@ jobs:
             echo "::error::Signing secrets are missing. Add UVGLOW_KEYSTORE_BASE64, UVGLOW_STORE_PASSWORD, UVGLOW_KEY_ALIAS and UVGLOW_KEY_PASSWORD."
             exit 1
           fi
-          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          # Tolerate how the value was pasted: spaces, line breaks, a UTF-8 BOM, or certutil's
+          # -----BEGIN/END----- lines around the base64.
+          printf '%s' "$KEYSTORE_BASE64" | tr -d ' \t\r\n' | sed -e 's/^\xEF\xBB\xBF//' -e 's/-----[A-Z ]*-----//g' > "$RUNNER_TEMP/keystore.b64"
+          if ! base64 --decode "$RUNNER_TEMP/keystore.b64" > "$RUNNER_TEMP/upload.jks" 2>/dev/null; then
+            echo "::error::UVGLOW_KEYSTORE_BASE64 is not valid base64 ($(wc -c < "$RUNNER_TEMP/keystore.b64") characters). Paste the whole contents of keystore-base64.txt again."
+            exit 1
+          fi
+          rm -f "$RUNNER_TEMP/keystore.b64"
+          if ! keytool -list -keystore "$RUNNER_TEMP/upload.jks" -storepass:env ORG_GRADLE_PROJECT_UVGLOW_STORE_PASSWORD \
+               -alias "$ORG_GRADLE_PROJECT_UVGLOW_KEY_ALIAS" > /dev/null 2>&1; then
+            echo "::error::The keystore decoded, but UVGLOW_STORE_PASSWORD or UVGLOW_KEY_ALIAS doesn't match it."
+            exit 1
+          fi
           echo "ORG_GRADLE_PROJECT_UVGLOW_STORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
 
       - name: Report release settings
