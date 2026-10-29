@@ -61,7 +61,10 @@ class FakeThemeRepository : ThemeRepository {
 
 class FakeTorch(override val isAvailable: Boolean = true) : TorchController {
     override val isTorchOn = MutableStateFlow(false)
+    /** Every setTorch call the app made, in order. */
+    val requests = mutableListOf<Boolean>()
     override fun setTorch(on: Boolean): Result<Unit> {
+        requests += on
         isTorchOn.value = on
         return Result.success(Unit)
     }

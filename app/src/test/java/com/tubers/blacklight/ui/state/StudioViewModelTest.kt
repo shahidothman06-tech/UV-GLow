@@ -1,5 +1,8 @@
 package com.tubers.blacklight.ui.state
 
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 import com.tubers.blacklight.ads.AdsStatus
 import com.tubers.blacklight.domain.model.LightMode
 import com.tubers.blacklight.domain.model.LightSettings
@@ -52,7 +55,7 @@ class StudioViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun TestScope.newViewModel(demoAllowed: Boolean = true) = StudioViewModel(
+    private fun TestScope.newViewModel(demoAllowed: Boolean = true, appLifecycle: Lifecycle? = null) = StudioViewModel(
         settingsRepo = settings,
         presetRepo = presets,
         themeRepo = themes,
@@ -60,7 +63,16 @@ class StudioViewModelTest {
         billing = FakeBilling(),
         clock = { testScheduler.currentTime },
         demoAllowed = demoAllowed,
+        appLifecycle = appLifecycle,
     )
+
+    /** Stands in for ProcessLifecycleOwner; "unsafe" skips the main-thread check, which plain JVM tests can't satisfy. */
+    private class FakeAppLifecycle : LifecycleOwner {
+        val registry: LifecycleRegistry = LifecycleRegistry.createUnsafe(this)
+        override val lifecycle: Lifecycle get() = registry
+        fun foreground() = registry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+        fun background() = registry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+    }
 
     @Test
     fun loadedState_alwaysCarriesTheRestoredPreferences() = runTest(dispatcher) {
@@ -375,5 +387,60 @@ class StudioViewModelTest {
         assertEquals(LightSettings(), vm.uiState.value.light)
         assertFalse(vm.uiState.value.prefs.reducedMotion)
         assertEquals(1, vm.uiState.value.presets.size)
+    }
+
+    @Test
+    fun led_goesOffInBackground_andComesBackOnReturn() = runTest(dispatcher) {
+        val app = FakeAppLifecycle().apply { foreground() }
+        settings.lightFlow.value = LightSettings(isOn = true, mode = LightMode.UV_GLOW)
+        settings.prefsFlow.value = settings.prefsFlow.value.copy(ledEnabled = true)
+        newViewModel(appLifecycle = app.lifecycle)
+        runCurrent()
+        assertTrue("LED follows the light", torch.isTorchOn.value)
+
+        app.background()
+        runCurrent()
+        assertFalse("LED off while the app is in the background", torch.isTorchOn.value)
+
+        app.foreground()
+        runCurrent()
+        assertTrue("LED back on when the app returns", torch.isTorchOn.value)
+        assertEquals(listOf(true, false, true), torch.requests)
+    }
+
+    @Test
+    fun led_staysOffOnReturn_whenTheLightWasTurnedOffMeanwhile() = runTest(dispatcher) {
+        val app = FakeAppLifecycle().apply { foreground() }
+        settings.lightFlow.value = LightSettings(isOn = true, mode = LightMode.UV_GLOW)
+        settings.prefsFlow.value = settings.prefsFlow.value.copy(ledEnabled = true)
+        val vm = newViewModel(appLifecycle = app.lifecycle)
+        runCurrent()
+
+        app.background()
+        runCurrent()
+        vm.togglePower()
+        runCurrent()
+        app.foreground()
+        runCurrent()
+        assertFalse(torch.isTorchOn.value)
+        assertEquals(listOf(true, false), torch.requests)
+    }
+
+    @Test
+    fun background_neverSwitchesOffATorchWeDidNotStart() = runTest(dispatcher) {
+        val app = FakeAppLifecycle().apply { foreground() }
+        // Another app (or the quick-settings tile) has the flashlight on; our light is off.
+        torch.isTorchOn.value = true
+        settings.lightFlow.value = LightSettings(isOn = false, mode = LightMode.UV_GLOW)
+        settings.prefsFlow.value = settings.prefsFlow.value.copy(ledEnabled = true)
+        newViewModel(appLifecycle = app.lifecycle)
+        runCurrent()
+
+        app.background()
+        runCurrent()
+        app.foreground()
+        runCurrent()
+        assertTrue("someone else's flashlight is left alone", torch.isTorchOn.value)
+        assertTrue(torch.requests.isEmpty())
     }
 }

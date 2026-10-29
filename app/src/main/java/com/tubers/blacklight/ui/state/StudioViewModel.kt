@@ -2,6 +2,9 @@ package com.tubers.blacklight.ui.state
 
 import android.app.Activity
 import android.os.SystemClock
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -73,6 +76,8 @@ class StudioViewModel(
     private val demoAllowed: Boolean = BuildConfig.DEBUG,
     /** Whether Premium can be opened at all; false in release builds until Premium ships. */
     private val premiumVisible: Boolean = BuildConfig.DEBUG,
+    /** The whole app's lifecycle (ProcessLifecycleOwner), so the LED goes off in the background. */
+    private val appLifecycle: Lifecycle? = null,
 ) : ViewModel() {
 
     private val loaded = MutableStateFlow(false)
@@ -87,6 +92,15 @@ class StudioViewModel(
 
     private var timerJob: Job? = null
     private var weTurnedTorchOn = false
+    /** False while the app is in the background; the LED is off then even if the light is on. */
+    private val inForeground = MutableStateFlow(true)
+    private val appLifecycleObserver = LifecycleEventObserver { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_START -> inForeground.value = true
+            Lifecycle.Event.ON_STOP -> inForeground.value = false
+            else -> Unit
+        }
+    }
 
     private data class Services(val torchOn: Boolean, val billing: BillingStatus, val ads: AdsStatus)
 
@@ -141,6 +155,7 @@ class StudioViewModel(
             launch { syncTorch() }
         }
         billing.connect()
+        appLifecycle?.addObserver(appLifecycleObserver)
     }
 
     private val isPremium: Boolean
@@ -431,9 +446,12 @@ class StudioViewModel(
 
     // ---------------------------------------------------------------- hardware
 
-    /** Keeps the camera LED in step with the light when the user opted in. */
+    /**
+     * Keeps the camera LED in step with the light when the user opted in. It goes off when the
+     * app is backgrounded and comes back on when the app returns, if the light is still on.
+     */
     private suspend fun syncTorch() {
-        combine(light, prefs) { l, p -> l.isOn && p.ledEnabled }
+        combine(light, prefs, inForeground) { l, p, fg -> StudioLogic.wantsTorch(l, p.ledEnabled, fg) }
             .distinctUntilChanged()
             .collect { wantOn ->
                 if (!torch.isAvailable) return@collect
@@ -445,6 +463,7 @@ class StudioViewModel(
     }
 
     override fun onCleared() {
+        appLifecycle?.removeObserver(appLifecycleObserver)
         // Leaving the app should not leave the LED burning.
         if (weTurnedTorchOn) torch.setTorch(false)
         super.onCleared()
@@ -465,6 +484,7 @@ class StudioViewModel(
                     torch = c.torchController,
                     billing = c.billingGateway,
                     ads = c.adsGateway,
+                    appLifecycle = ProcessLifecycleOwner.get().lifecycle,
                 )
             }
         }

@@ -1,15 +1,19 @@
 package com.tubers.blacklight.ui.components
 
+import android.content.Context
 import android.provider.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 
@@ -45,10 +49,21 @@ fun rememberAnimationClock(running: Boolean): MutableFloatState {
 @Composable
 fun shouldAnimate(isOn: Boolean, reducedMotion: Boolean): Boolean {
     val context = LocalContext.current
-    val systemAnimationsOff = remember {
-        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    var animatorScale by remember { mutableStateOf(readAnimatorScale(context)) }
+    // Re-read on every resume, so turning "Remove animations" on or off in system settings
+    // applies as soon as the user comes back, without restarting the app.
+    LifecycleResumeEffect(context) {
+        animatorScale = readAnimatorScale(context)
+        onPauseOrDispose { }
     }
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val visible = lifecycleState.isAtLeast(Lifecycle.State.STARTED)
-    return isOn && !reducedMotion && !systemAnimationsOff && visible
+    return animationAllowed(isOn, reducedMotion, animatorScale, visible)
 }
+
+private fun readAnimatorScale(context: Context): Float =
+    Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
+
+/** The rule behind [shouldAnimate]; an animator scale of 0 is the system "Remove animations" switch. */
+fun animationAllowed(isOn: Boolean, reducedMotion: Boolean, animatorScale: Float, visible: Boolean): Boolean =
+    isOn && !reducedMotion && animatorScale != 0f && visible

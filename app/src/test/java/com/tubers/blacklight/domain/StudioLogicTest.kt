@@ -116,4 +116,13 @@ class StudioLogicTest {
         assertNotNull(LightMode.fromId("rays"))
         assertEquals(LightMode.UV_GLOW, LightMode.fromId("unknown"))
     }
+
+    @Test
+    fun wantsTorch_onlyWithLightOnLedOptInAndAppInForeground() {
+        val on = base.copy(isOn = true)
+        assertTrue(StudioLogic.wantsTorch(on, ledEnabled = true, inForeground = true))
+        assertFalse("app in background", StudioLogic.wantsTorch(on, ledEnabled = true, inForeground = false))
+        assertFalse("LED not enabled", StudioLogic.wantsTorch(on, ledEnabled = false, inForeground = true))
+        assertFalse("light off", StudioLogic.wantsTorch(on.copy(isOn = false), ledEnabled = true, inForeground = true))
+    }
 }

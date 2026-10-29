@@ -23,6 +23,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -31,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -118,6 +120,16 @@ private fun NavHostController.openScreen(route: String) {
 @Composable
 fun UvGlowRoot(vm: StudioViewModel) {
     val state by vm.uiState.collectAsStateWithLifecycle()
+
+    // The screen is the light, so it must not dim or lock while the light is on. Cleared when the
+    // light goes off or this UI leaves the window.
+    val view = LocalView.current
+    val keepAwake = state.loaded && state.light.isOn
+    DisposableEffect(view, keepAwake) {
+        view.keepScreenOn = keepAwake
+        onDispose { view.keepScreenOn = false }
+    }
+
     if (!state.loaded) {
         // The system splash stays up until this is true; draw the ground color meanwhile.
         Box(Modifier.fillMaxSize().background(UvColors.Ground))
