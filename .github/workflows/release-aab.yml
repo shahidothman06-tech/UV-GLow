@@ -64,7 +64,8 @@ jobs:
           # -----BEGIN/END----- lines around the base64.
           printf '%s' "$KEYSTORE_BASE64" | tr -d ' \t\r\n' | sed -e 's/^\xEF\xBB\xBF//' -e 's/-----[A-Z ]*-----//g' > "$RUNNER_TEMP/keystore.b64"
           if ! base64 --decode "$RUNNER_TEMP/keystore.b64" > "$RUNNER_TEMP/upload.jks" 2>/dev/null; then
-            echo "::error::UVGLOW_KEYSTORE_BASE64 is not valid base64 ($(wc -c < "$RUNNER_TEMP/keystore.b64") characters). Paste the whole contents of keystore-base64.txt again."
+            bad=$(tr -d 'A-Za-z0-9+/=' < "$RUNNER_TEMP/keystore.b64" | fold -w1 | sort -u | tr -d '\n')
+            echo "::error::UVGLOW_KEYSTORE_BASE64 is not valid base64 ($(wc -c < "$RUNNER_TEMP/keystore.b64") characters; starts with '$(head -c 4 "$RUNNER_TEMP/keystore.b64")'; non-base64 characters: '$bad'). Paste the keystore's base64 again."
             exit 1
           fi
           rm -f "$RUNNER_TEMP/keystore.b64"
