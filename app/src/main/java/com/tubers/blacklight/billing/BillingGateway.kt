@@ -3,7 +3,8 @@ package com.tubers.blacklight.billing
 import android.app.Activity
 import kotlinx.coroutines.flow.StateFlow
 
-enum class PlanType { MONTHLY, YEARLY }
+/** Premium is sold as a single monthly subscription. */
+enum class PlanType { MONTHLY }
 
 data class BillingStatus(
     /** True only when real product IDs are configured (see gradle.properties). */

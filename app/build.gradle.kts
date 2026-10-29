@@ -6,7 +6,6 @@ plugins {
 
 // Billing product IDs come from gradle.properties (or -P on the command line).
 val monthlyProductId: String = (findProperty("uvglow.billing.monthlyProductId") as String?).orEmpty()
-val yearlyProductId: String = (findProperty("uvglow.billing.yearlyProductId") as String?).orEmpty()
 
 // AdMob IDs for release builds come from gradle.properties (ADMOB_APP_ID, ADMOB_BANNER_ID).
 // Debug builds always use Google's official test IDs, so real ads are never loaded while testing.
@@ -53,7 +52,6 @@ android {
         vectorDrawables { useSupportLibrary = true }
 
         buildConfigField("String", "BILLING_MONTHLY_ID", "\"$monthlyProductId\"")
-        buildConfigField("String", "BILLING_YEARLY_ID", "\"$yearlyProductId\"")
     }
 
     signingConfigs {

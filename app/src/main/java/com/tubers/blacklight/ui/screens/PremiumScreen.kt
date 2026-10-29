@@ -6,13 +6,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,10 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,7 +61,8 @@ import com.tubers.blacklight.ui.theme.UvType
 fun PremiumScreen(state: StudioUiState, vm: StudioViewModel) {
     val accent = LocalAccent.current
     val context = LocalContext.current
-    var plan by rememberSaveable { mutableStateOf(PlanType.YEARLY) }
+    // Premium is sold as one monthly subscription.
+    val plan = PlanType.MONTHLY
     val billing = state.billing
     // Debug builds without product IDs run a labelled demo. Release builds never do: if billing
     // isn't set up or Play can't be used, they show an error and no checkout.
@@ -121,24 +115,20 @@ fun PremiumScreen(state: StudioUiState, vm: StudioViewModel) {
                 )
             }
         } else {
-            SectionLabel("Choose a plan")
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PlanType.entries.forEach { type ->
-                    PlanCard(
-                        title = if (type == PlanType.MONTHLY) "Monthly" else "Yearly",
-                        offer = billing.plans[type],
-                        state = when {
-                            demo -> PlanCardState.DEMO
-                            type in billing.unavailablePlans -> PlanCardState.UNAVAILABLE
-                            else -> PlanCardState.LOADING
-                        },
-                        badge = if (type == PlanType.YEARLY) "BEST VALUE" else null,
-                        selected = plan == type,
-                        onClick = { plan = type },
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                    )
-                }
-            }
+            SectionLabel("Your plan")
+            PlanCard(
+                title = "Monthly",
+                offer = selectedOffer,
+                state = when {
+                    demo -> PlanCardState.DEMO
+                    plan in billing.unavailablePlans -> PlanCardState.UNAVAILABLE
+                    else -> PlanCardState.LOADING
+                },
+                badge = null,
+                selected = true,
+                onClick = {},
+                modifier = Modifier.fillMaxWidth(),
+            )
 
             AccentButton(
                 text = if (demo) "Continue · demo checkout" else "Continue",
@@ -218,8 +208,8 @@ private fun CompareRow(feature: String, free: String, premium: String, header: B
 }
 
 /**
- * One plan. The main figure is Play's localised renewing price for that plan's own period (so the
- * yearly card leads with the yearly price), with any trial or intro price spelled out below it.
+ * The plan card. The main figure is Play's localised renewing price for the plan's own period, with
+ * any trial or intro price spelled out below it.
  */
 @Composable
 private fun PlanCard(

@@ -7,8 +7,8 @@ class AppLinksTest {
 
     @Test fun manageSubscription_deepLinksToTheActiveProduct() {
         assertEquals(
-            "https://play.google.com/store/account/subscriptions?sku=uvglow_premium_yearly&package=com.tubers.blacklight",
-            AppLinks.manageSubscriptionUrl("uvglow_premium_yearly"),
+            "https://play.google.com/store/account/subscriptions?sku=uvglow_premium_monthly&package=com.tubers.blacklight",
+            AppLinks.manageSubscriptionUrl("uvglow_premium_monthly"),
         )
     }
 
