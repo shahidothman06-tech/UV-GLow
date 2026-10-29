@@ -27,9 +27,9 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 /**
- * Google Play Billing (Play Billing Library 8+) for the two Premium subscriptions.
+ * Google Play Billing (Play Billing Library 8+) for the monthly Premium subscription.
  *
- * When product IDs are blank (the default), this gateway stays in demo mode: it never connects
+ * When the product ID is blank (the default), this gateway stays in demo mode: it never connects
  * and every purchase/restore returns NotConfigured, so debug builds can show an honest "demo"
  * notice and release builds an error.
  *
@@ -39,11 +39,10 @@ import kotlin.coroutines.resume
 class PlayBillingGateway(
     context: Context,
     private val monthlyProductId: String,
-    private val yearlyProductId: String,
     private val scope: CoroutineScope,
 ) : BillingGateway {
 
-    private val isConfigured = monthlyProductId.isNotBlank() && yearlyProductId.isNotBlank()
+    private val isConfigured = monthlyProductId.isNotBlank()
 
     private val _status = MutableStateFlow(BillingStatus(configured = isConfigured))
     override val status: StateFlow<BillingStatus> = _status.asStateFlow()
@@ -94,7 +93,9 @@ class PlayBillingGateway(
         })
     }
 
-    private fun idFor(plan: PlanType) = if (plan == PlanType.MONTHLY) monthlyProductId else yearlyProductId
+    private fun idFor(plan: PlanType) = when (plan) {
+        PlanType.MONTHLY -> monthlyProductId
+    }
 
     private fun planFor(productId: String) = PlanType.entries.firstOrNull { idFor(it) == productId }
 

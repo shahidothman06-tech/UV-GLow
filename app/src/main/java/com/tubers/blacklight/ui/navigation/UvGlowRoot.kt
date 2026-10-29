@@ -1,5 +1,6 @@
 package com.tubers.blacklight.ui.navigation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -26,12 +27,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,6 +49,7 @@ import androidx.navigation.compose.rememberNavController
 import com.tubers.blacklight.ads.AdaptiveBanner
 import com.tubers.blacklight.ui.components.BottomNav
 import com.tubers.blacklight.ui.components.FlashWarningDialog
+import com.tubers.blacklight.ui.components.findActivity
 import com.tubers.blacklight.ui.components.NavItem
 import com.tubers.blacklight.ui.components.SideNav
 import com.tubers.blacklight.ui.components.SubHeader
@@ -150,6 +155,16 @@ fun UvGlowRoot(vm: StudioViewModel) {
         // First launch starts on the welcome screen; later launches go straight to Home. Saved so a
         // rotation or window resize rebuilds the same graph the restored back stack belongs to.
         val startRoute = rememberSaveable { if (state.prefs.introSeen) Routes.HOME else Routes.INTRO }
+
+        // Back on Home would close the app: free users see Premium first, and backing out of that
+        // closes the app. Leaving Premium any other way, or subscribing, cancels it.
+        val context = LocalContext.current
+        var exitPaywall by rememberSaveable { mutableStateOf(false) }
+        LaunchedEffect(route, state.isPremium) {
+            if (route != Routes.PREMIUM || state.isPremium) exitPaywall = false
+        }
+        val showExitPaywall = state.premiumVisible && !state.isPremium
+        val closeExitPaywall: () -> Unit = { context.findActivity()?.finish() }
         // One-off events from the ViewModel.
         LaunchedEffect(Unit) {
             vm.uiEvents.collect { event ->
@@ -197,7 +212,9 @@ fun UvGlowRoot(vm: StudioViewModel) {
                     topBar = {
                         if (showChrome) {
                             if (isSubScreen) {
-                                SubHeader(subScreenTitle.orEmpty(), onBack = { nav.popBackStack() })
+                                SubHeader(subScreenTitle.orEmpty(), onBack = {
+                                    if (exitPaywall && route == Routes.PREMIUM) closeExitPaywall() else nav.popBackStack()
+                                })
                             } else {
                                 TabHeader(onPremium = if (state.premiumVisible) ({ nav.openScreen(Routes.PREMIUM) }) else null)
                             }
@@ -238,6 +255,10 @@ fun UvGlowRoot(vm: StudioViewModel) {
                         // Each destination reads state itself, so the graph builder captures only stable
                         // objects and isn't rebuilt while a slider is being dragged.
                         composable(Routes.HOME) {
+                            BackHandler(enabled = showExitPaywall) {
+                                exitPaywall = true
+                                nav.openScreen(Routes.PREMIUM)
+                            }
                             HomeScreen(
                                 vm.state(), vm,
                                 onOpenEffects = { nav.openTab(Routes.EFFECTS) },
@@ -257,7 +278,10 @@ fun UvGlowRoot(vm: StudioViewModel) {
                             )
                         }
                         composable(Routes.TIMER) { TimerScreen(vm.state(), vm) }
-                        composable(Routes.PREMIUM) { PremiumScreen(vm.state(), vm) }
+                        composable(Routes.PREMIUM) {
+                            BackHandler(enabled = exitPaywall) { closeExitPaywall() }
+                            PremiumScreen(vm.state(), vm)
+                        }
                         composable(Routes.PRIVACY) {
                             PrivacyPolicyScreen(
                                 onBack = { nav.popBackStack() },

@@ -55,7 +55,7 @@ If you see "SDK location not found", create `local.properties` with
 | **Presets** | Save the current look; preview cards; apply, rename and delete; "Active" state |
 | **Auto-off timer** | 1 / 5 / 10 / 30 min; live ring countdown; start, pause, resume and cancel; switches the light (and LED) off when it ends |
 | **Settings** | Reduced motion; optional phone LED; Manage subscription (opens Google Play); replay intro; reset settings (with confirm); About & safety with an in-app Privacy policy screen and "Privacy & ad choices" (where consent applies) |
-| **Premium** | Free vs Premium table; monthly and yearly plans with Play's localised price, billing period and any trial/intro offer; auto-renewal terms; checkout; restore; subscription status; demo preview switch (debug builds only) |
+| **Premium** | Free vs Premium table; one monthly plan with Play's localised price, billing period and any trial/intro offer; auto-renewal terms; checkout; restore; subscription status; demo preview switch (debug builds only) |
 
 Free plan limits: 4 modes (Strobe and Blacklight are Premium), 5 presets, 1 custom theme.
 
@@ -156,12 +156,11 @@ and no checkout. A preview flag left over from a debug install is ignored.
 
 To go live:
 
-1. Create two **subscriptions** in Play Console (monthly and yearly), each with an active base plan
+1. Create one **subscription** in Play Console (monthly), with an active base plan
    (and optionally a free-trial or intro offer).
-2. Put their product IDs in `gradle.properties`:
+2. Put its product ID in `gradle.properties`:
    ```properties
    uvglow.billing.monthlyProductId=uvglow_premium_monthly
-   uvglow.billing.yearlyProductId=uvglow_premium_yearly
    ```
 3. Upload a signed build to an internal testing track and add licence testers.
 4. **Recommended:** verify purchase tokens on your own server (Play Developer API) before granting

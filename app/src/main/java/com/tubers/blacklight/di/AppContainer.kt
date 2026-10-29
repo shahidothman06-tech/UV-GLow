@@ -33,7 +33,7 @@ class AppContainer(context: Context) {
     val themeRepository: ThemeRepository by lazy { RoomThemeRepository(database.themeDao()) }
     val torchController: TorchController by lazy { AndroidTorchController(appContext) }
     val billingGateway: BillingGateway by lazy {
-        PlayBillingGateway(appContext, BuildConfig.BILLING_MONTHLY_ID, BuildConfig.BILLING_YEARLY_ID, appScope)
+        PlayBillingGateway(appContext, BuildConfig.BILLING_MONTHLY_ID, appScope)
     }
     val adsGateway: AdsGateway by lazy { GoogleAdsGateway(appContext, BuildConfig.ADMOB_BANNER_ID, appScope) }
 }
