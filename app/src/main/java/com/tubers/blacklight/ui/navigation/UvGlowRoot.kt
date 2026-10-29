@@ -49,6 +49,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.tubers.blacklight.BuildConfig
 import com.tubers.blacklight.R
 import com.tubers.blacklight.ads.AdaptiveBanner
 import com.tubers.blacklight.ui.components.BottomNav
@@ -165,12 +166,13 @@ fun UvGlowRoot(vm: StudioViewModel) {
         val route = backStack?.destination?.route
         val ground by animateColorAsState(accent.ground, tween(400), label = "ground")
 
-        // First launch starts on the language screen, then the welcome screen; later launches go
+        // First launch starts on the language screen (only while LANGUAGE_PICKER_ENABLED, i.e. once
+        // translations exist), then the welcome screen; later launches go
         // straight to Home. Saved so a rotation, window resize or language change rebuilds the
         // same graph the restored back stack belongs to.
         val startRoute = rememberSaveable {
             when {
-                state.prefs.languageTag == null -> Routes.LANGUAGE
+                BuildConfig.LANGUAGE_PICKER_ENABLED && state.prefs.languageTag == null -> Routes.LANGUAGE
                 !state.prefs.introSeen -> Routes.INTRO
                 else -> Routes.HOME
             }
@@ -304,7 +306,7 @@ fun UvGlowRoot(vm: StudioViewModel) {
                             SettingsScreen(
                                 vm.state(), vm,
                                 onReplayIntro = { nav.openScreen(Routes.INTRO) },
-                                onOpenLanguage = { nav.openScreen(Routes.LANGUAGE) },
+                                onOpenLanguage = if (BuildConfig.LANGUAGE_PICKER_ENABLED) ({ nav.openScreen(Routes.LANGUAGE) }) else null,
                                 onOpenPrivacy = { nav.openScreen(Routes.PRIVACY) },
                             )
                         }

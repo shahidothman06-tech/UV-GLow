@@ -1,0 +1,103 @@
+# Builds the signed release App Bundle (.aab) for Google Play. Run it from Actions › Release AAB ›
+# Run workflow, or push a tag like v1.0.0. Upload the UVGlow-release-aab artifact in Play Console.
+#
+# Repository secrets (Settings › Secrets and variables › Actions › Secrets):
+#   UVGLOW_KEYSTORE_BASE64  upload keystore (.jks), base64-encoded on one line
+#   UVGLOW_STORE_PASSWORD   keystore password
+#   UVGLOW_KEY_ALIAS        key alias, e.g. upload
+#   UVGLOW_KEY_PASSWORD     key password
+# Repository variables (same page › Variables); blank or missing turns the feature off:
+#   UVGLOW_MONTHLY_PRODUCT_ID  Play subscription product ID; blank hides Premium in the release
+#   ADMOB_APP_ID, ADMOB_BANNER_ID  real AdMob IDs; blank ships without ads
+name: Release AAB
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: "versionCode (blank = 100 + run number). Must be higher than the last upload."
+        required: false
+        default: ""
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-aab
+  cancel-in-progress: false
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ORG_GRADLE_PROJECT_UVGLOW_STORE_PASSWORD: ${{ secrets.UVGLOW_STORE_PASSWORD }}
+      ORG_GRADLE_PROJECT_UVGLOW_KEY_ALIAS: ${{ secrets.UVGLOW_KEY_ALIAS }}
+      ORG_GRADLE_PROJECT_UVGLOW_KEY_PASSWORD: ${{ secrets.UVGLOW_KEY_PASSWORD }}
+      ORG_GRADLE_PROJECT_ADMOB_APP_ID: ${{ vars.ADMOB_APP_ID }}
+      ORG_GRADLE_PROJECT_ADMOB_BANNER_ID: ${{ vars.ADMOB_BANNER_ID }}
+      MONTHLY_PRODUCT_ID: ${{ vars.UVGLOW_MONTHLY_PRODUCT_ID }}
+      VERSION_CODE: ${{ inputs.version_code }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Restore upload keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.UVGLOW_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$ORG_GRADLE_PROJECT_UVGLOW_STORE_PASSWORD" ] \
+             || [ -z "$ORG_GRADLE_PROJECT_UVGLOW_KEY_ALIAS" ] || [ -z "$ORG_GRADLE_PROJECT_UVGLOW_KEY_PASSWORD" ]; then
+            echo "::error::Signing secrets are missing. Add UVGLOW_KEYSTORE_BASE64, UVGLOW_STORE_PASSWORD, UVGLOW_KEY_ALIAS and UVGLOW_KEY_PASSWORD."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          echo "ORG_GRADLE_PROJECT_UVGLOW_STORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+
+      - name: Report release settings
+        run: |
+          [ -n "$MONTHLY_PRODUCT_ID" ] || echo "::warning::UVGLOW_MONTHLY_PRODUCT_ID is not set: Premium is hidden in this build."
+          { [ -n "$ORG_GRADLE_PROJECT_ADMOB_APP_ID" ] && [ -n "$ORG_GRADLE_PROJECT_ADMOB_BANNER_ID" ]; } \
+            || echo "::warning::ADMOB_APP_ID or ADMOB_BANNER_ID is not set: this build shows no ads."
+          echo "VERSION_CODE=${VERSION_CODE:-$((100 + GITHUB_RUN_NUMBER))}" >> "$GITHUB_ENV"
+
+      - name: Unit tests and release bundle
+        run: |
+          chmod +x ./gradlew
+          ./gradlew testDebugUnitTest bundleRelease --no-daemon --stacktrace \
+            "-Puvglow.billing.monthlyProductId=$MONTHLY_PRODUCT_ID" \
+            "-Puvglow.versionCode=$VERSION_CODE"
+
+      - name: Verify the bundle is signed with the upload key
+        run: |
+          aab=$(ls app/build/outputs/bundle/release/*.aab)
+          jarsigner -verify "$aab" | grep -q "jar verified" || { echo "::error::$aab is not signed"; exit 1; }
+          mv "$aab" "app/build/outputs/bundle/release/UVGlow-${GITHUB_REF_NAME//\//-}-vc$VERSION_CODE.aab"
+          echo "Built versionCode $VERSION_CODE"
+
+      - name: Upload release AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: UVGlow-release-aab
+          path: app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+
+      - name: Upload R8 mapping
+        uses: actions/upload-artifact@v4
+        with:
+          name: UVGlow-release-mapping
+          path: app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: warn
+
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks"

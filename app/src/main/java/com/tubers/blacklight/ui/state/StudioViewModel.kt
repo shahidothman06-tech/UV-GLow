@@ -74,8 +74,8 @@ class StudioViewModel(
     private val persistDelayMs: Long = 250L,
     /** Demo checkout and the Premium preview switch; never available in release builds. */
     private val demoAllowed: Boolean = BuildConfig.DEBUG,
-    /** Whether Premium can be opened at all; false in release builds until Premium ships. */
-    private val premiumVisible: Boolean = BuildConfig.DEBUG,
+    /** Whether Premium can be opened at all; in release builds only once a product ID is set. */
+    private val premiumVisible: Boolean = BuildConfig.PREMIUM_ENABLED,
     /** The whole app's lifecycle (ProcessLifecycleOwner), so the LED goes off in the background. */
     private val appLifecycle: Lifecycle? = null,
 ) : ViewModel() {
@@ -173,7 +173,7 @@ class StudioViewModel(
             events.trySend(UiEvent.OpenPremium)
             message("$feature is part of Premium")
         } else {
-            // Release builds: Premium isn't on sale yet, so there's no screen to send people to.
+            // Release built without a product ID: Premium isn't on sale, so there's no screen to send people to.
             message("$feature comes with Premium in the next update")
         }
     }
