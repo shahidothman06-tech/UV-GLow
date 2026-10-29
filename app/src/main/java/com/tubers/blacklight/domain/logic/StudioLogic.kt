@@ -30,6 +30,10 @@ object StudioLogic {
 
     fun togglePower(s: LightSettings) = s.copy(isOn = !s.isOn)
 
+    /** The phone LED follows the light only when the user opted in and the app is on screen. */
+    fun wantsTorch(s: LightSettings, ledEnabled: Boolean, inForeground: Boolean) =
+        s.isOn && ledEnabled && inForeground
+
     fun setBrightness(s: LightSettings, v: Int) =
         s.copy(brightness = v.coerceIn(LightSettings.BRIGHTNESS_MIN, LightSettings.BRIGHTNESS_MAX))
 
