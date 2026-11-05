@@ -9,7 +9,7 @@ val monthlyProductId: String = (findProperty("uvglow.billing.monthlyProductId") 
 
 // Play needs a higher versionCode for every upload. CI passes -Puvglow.versionCode (from the run
 // number); local builds fall back to the value below.
-val appVersionCode: Int = (findProperty("uvglow.versionCode") as String?)?.trim()?.toIntOrNull() ?: 1
+val appVersionCode: Int = (findProperty("uvglow.versionCode") as String?)?.trim()?.toIntOrNull() ?: 2
 
 // AdMob IDs for release builds come from gradle.properties (ADMOB_APP_ID, ADMOB_BANNER_ID).
 // Debug builds always use Google's official test IDs, so real ads are never loaded while testing.
@@ -53,7 +53,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = appVersionCode
-        versionName = "1.0.0"
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -133,6 +133,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.activity.compose)
+    // Play Services (Ads/UMP/Billing via play-services-basement) pulls in androidx.fragment 1.1.0,
+    // which Play Console flags as outdated. Declaring a current fragment-ktx overrides it.
+    implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
