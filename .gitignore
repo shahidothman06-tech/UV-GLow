@@ -19,3 +19,8 @@ keystore.properties
 # Python venv for docs/store/make_store_images.py
 .venv/
 keystore-base64.txt
+
+# Keystore archives (never commit signing keys)
+*.rar
+*.zip
+*.7z
