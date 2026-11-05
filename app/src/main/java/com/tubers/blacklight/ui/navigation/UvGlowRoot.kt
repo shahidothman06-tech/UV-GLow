@@ -52,6 +52,7 @@ import androidx.navigation.compose.rememberNavController
 import com.tubers.blacklight.BuildConfig
 import com.tubers.blacklight.R
 import com.tubers.blacklight.ads.AdaptiveBanner
+import com.tubers.blacklight.play.InAppReview
 import com.tubers.blacklight.ui.components.BottomNav
 import com.tubers.blacklight.ui.components.FlashWarningDialog
 import com.tubers.blacklight.ui.components.findActivity
@@ -181,8 +182,12 @@ fun UvGlowRoot(vm: StudioViewModel) {
         val context = LocalContext.current
         val offerPremium = state.premiumVisible && !state.isPremium
         val closePremium: () -> Unit = { nav.popBackStack() }
-        // Back on Home closes the app only when pressed twice within EXIT_WINDOW_MS.
+        // Back on Home closes the app only when pressed twice within EXIT_WINDOW_MS. On the way
+        // out, Google Play's rating card may show first (see InAppReview).
         var lastHomeBackAt by remember { mutableLongStateOf(0L) }
+        var exiting by remember { mutableStateOf(false) }
+        val review = remember { InAppReview(context) }
+        LaunchedEffect(Unit) { review.prepare() }
 
         // Free users see Premium once each time the app is opened, as soon as Home shows. It waits
         // for Play to report owned purchases so subscribers never see it.
@@ -284,8 +289,14 @@ fun UvGlowRoot(vm: StudioViewModel) {
                         composable(Routes.HOME) {
                             BackHandler {
                                 val now = SystemClock.elapsedRealtime()
-                                if (now - lastHomeBackAt < EXIT_WINDOW_MS) {
-                                    context.findActivity()?.finish()
+                                if (exiting) {
+                                    // The rating card is opening; ignore extra presses.
+                                } else if (now - lastHomeBackAt < EXIT_WINDOW_MS) {
+                                    val activity = context.findActivity()
+                                    if (activity != null) {
+                                        exiting = true
+                                        review.showThen(activity) { activity.finish() }
+                                    }
                                 } else {
                                     lastHomeBackAt = now
                                     Toast.makeText(context, R.string.press_back_again_to_exit, Toast.LENGTH_SHORT).show()
@@ -305,7 +316,6 @@ fun UvGlowRoot(vm: StudioViewModel) {
                         composable(Routes.SETTINGS) {
                             SettingsScreen(
                                 vm.state(), vm,
-                                onReplayIntro = { nav.openScreen(Routes.INTRO) },
                                 onOpenLanguage = if (BuildConfig.LANGUAGE_PICKER_ENABLED) ({ nav.openScreen(Routes.LANGUAGE) }) else null,
                                 onOpenPrivacy = { nav.openScreen(Routes.PRIVACY) },
                             )
@@ -343,11 +353,7 @@ fun UvGlowRoot(vm: StudioViewModel) {
                         composable(Routes.INTRO) {
                             IntroScreen(onGetStarted = {
                                 vm.markIntroSeen()
-                                if (nav.previousBackStackEntry != null) {
-                                    nav.popBackStack() // replayed from Settings
-                                } else {
-                                    nav.navigate(Routes.HOME) { popUpTo(Routes.INTRO) { inclusive = true } }
-                                }
+                                nav.navigate(Routes.HOME) { popUpTo(Routes.INTRO) { inclusive = true } }
                             })
                         }
                     }

@@ -39,7 +39,7 @@ import com.tubers.blacklight.ui.theme.LocalAccent
 import com.tubers.blacklight.ui.theme.UvColors
 import com.tubers.blacklight.ui.theme.UvType
 
-/** Welcome screen: shown on first launch and from Settings › Replay splash screen. */
+/** Welcome screen: shown on first launch only. */
 @Composable
 fun IntroScreen(onGetStarted: () -> Unit) {
     val accent = LocalAccent.current

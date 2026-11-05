@@ -17,6 +17,15 @@ object AppLinks {
 
     const val PACKAGE_NAME = "com.tubers.blacklight"
 
+    /**
+     * The app's Play Store page, used by Settings › Rate us. The market:// link opens the Play
+     * Store app; the https link is the fallback when Play isn't installed.
+     */
+    val playStoreUrls: List<String> = listOf(
+        "market://details?id=$PACKAGE_NAME",
+        "https://play.google.com/store/apps/details?id=$PACKAGE_NAME",
+    )
+
     private const val SUBSCRIPTIONS_URL = "https://play.google.com/store/account/subscriptions"
 
     /**

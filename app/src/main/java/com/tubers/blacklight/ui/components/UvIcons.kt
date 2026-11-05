@@ -61,6 +61,7 @@ object UvIcons {
         "M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.9-.6-1.3-.6-2.2 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z",
         circle(7.5f, 11f, 1.2f), circle(10.5f, 7f, 1.2f), circle(15f, 7.5f, 1.2f),
     )
+    val Star = stroke("star", "M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z")
     val Shield = stroke("shield", "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z")
     val Timer = stroke("timer", circle(12f, 13f, 8f), "M12 9v4l2.5 2.5M9 2h6")
 
