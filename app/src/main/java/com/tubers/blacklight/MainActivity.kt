@@ -8,12 +8,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.tubers.blacklight.play.InAppUpdater
 import com.tubers.blacklight.ui.navigation.UvGlowRoot
 import com.tubers.blacklight.ui.state.StudioViewModel
 
 class MainActivity : ComponentActivity() {
 
     private val viewModel: StudioViewModel by viewModels { StudioViewModel.Factory }
+    private lateinit var updater: InAppUpdater
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Keep the system splash until saved settings are restored, so the first frame is correct.
@@ -29,7 +31,17 @@ class MainActivity : ComponentActivity() {
 
         setContent { UvGlowRoot(viewModel) }
 
+        // Google Play in-app update: when a newer version is on Play, it installs right away.
+        updater = InAppUpdater(this)
+        if (savedInstanceState == null) updater.checkForUpdate()
+
         // Ad consent (Google UMP) once per launch, not on every rotation; ads start only if allowed.
         if (savedInstanceState == null) viewModel.gatherAdConsent(this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Brings the Play update screen back if the person left while it was installing.
+        updater.resumeIfInProgress()
     }
 }
