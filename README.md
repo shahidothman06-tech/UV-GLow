@@ -54,7 +54,7 @@ If you see "SDK location not found", create `local.properties` with
 | **Themes** | 5 colour swatches + HSV custom picker; built-in themes; create / rename / apply / update / delete custom themes |
 | **Presets** | Save the current look; preview cards; apply, rename and delete; "Active" state |
 | **Auto-off timer** | 1 / 5 / 10 / 30 min; live ring countdown; start, pause, resume and cancel; switches the light (and LED) off when it ends |
-| **Settings** | Reduced motion; optional phone LED; Manage subscription (opens Google Play); replay intro; reset settings (with confirm); About & safety with an in-app Privacy policy screen and "Privacy & ad choices" (where consent applies) |
+| **Settings** | Reduced motion; optional phone LED; Manage subscription (opens Google Play); Rate us (opens the Play Store page); reset settings (with confirm); About & safety with an in-app Privacy policy screen and "Privacy & ad choices" (where consent applies) |
 | **Premium** | Free vs Premium table; one monthly plan with Play's localised price, billing period and any trial/intro offer; auto-renewal terms; checkout; restore; subscription status; demo preview switch (debug builds only) |
 
 Free plan limits: 4 modes (Strobe and Blacklight are Premium), 5 presets, 1 custom theme.
@@ -62,6 +62,14 @@ Free plan limits: 4 modes (Strobe and Blacklight are Premium), 5 presets, 1 cust
 **Ads:** one adaptive AdMob banner at the bottom of Effects, Themes, Presets and Settings, only
 while the light is off and after Google's consent check (UMP) allows ads. Never on Home, never
 over controls, no interstitial or rewarded ads. Debug builds use Google's test IDs.
+
+**Google Play extras** (only for installs from Play, including internal testing; debug or
+sideloaded builds skip them quietly):
+- **In-app updates** (`play/InAppUpdater.kt`, IMMEDIATE type): when Play has a newer version, a
+  full-screen Play screen installs it at launch and the app restarts on the new version.
+- **Exit and rating**: Back on Home shows "Press back again to exit"; the second Back may show
+  Google Play's rating card first (`play/InAppReview.kt`, at most once every 14 days, and Play has
+  its own limit), then the app closes.
 
 Every screen adapts to landscape, tablets, foldables and resizable windows: a side navigation rail
 in landscape, a two-pane Home with a flashlight stage that scales to fit, and content capped at a

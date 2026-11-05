@@ -17,6 +17,16 @@ class AppLinksTest {
         assertEquals("https://play.google.com/store/account/subscriptions", AppLinks.manageSubscriptionUrl(""))
     }
 
+    @Test fun rateUs_opensThePlayStoreAppFirstThenTheWebPage() {
+        assertEquals(
+            listOf(
+                "market://details?id=com.tubers.blacklight",
+                "https://play.google.com/store/apps/details?id=com.tubers.blacklight",
+            ),
+            AppLinks.playStoreUrls,
+        )
+    }
+
     @Test fun packageNameMatchesTheBuild() {
         assertEquals(BuildConfig.APPLICATION_ID, AppLinks.PACKAGE_NAME)
     }

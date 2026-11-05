@@ -50,7 +50,6 @@ import com.tubers.blacklight.ui.theme.UvColors
 fun SettingsScreen(
     state: StudioUiState,
     vm: StudioViewModel,
-    onReplayIntro: () -> Unit,
     onOpenPrivacy: () -> Unit,
     /** Null hides the Language row (release builds until translations exist). */
     onOpenLanguage: (() -> Unit)?,
@@ -124,7 +123,9 @@ fun SettingsScreen(
                     (AppLanguages.find(state.prefs.languageTag) ?: AppLanguages.all.first()).nativeName, onOpenLanguage,
                 )
             }
-            NavRow(UvIcons.Refresh, "Replay splash screen", "See the welcome screen again", onReplayIntro)
+            NavRow(UvIcons.Star, "Rate us", "Rate UV Glow on Google Play", {
+                if (AppLinks.playStoreUrls.none { context.openExternal(it) }) vm.showMessage("Couldn’t open Google Play")
+            })
             HorizontalDivider(color = UvColors.Divider)
             if (!confirmReset) {
                 NavRow(UvIcons.Trash, "Reset settings", "Restore default light and comfort settings", { confirmReset = true })
