@@ -68,8 +68,8 @@ sideloaded builds skip them quietly):
 - **In-app updates** (`play/InAppUpdater.kt`, IMMEDIATE type): when Play has a newer version, a
   full-screen Play screen installs it at launch and the app restarts on the new version.
 - **Exit and rating**: Back on Home shows "Press back again to exit"; the second Back may show
-  Google Play's rating card first (`play/InAppReview.kt`, at most once every 14 days, and Play has
-  its own limit), then the app closes.
+  Google Play's rating card first (`play/InAppReview.kt`: not until 3 days after first use, then
+  at most once every 14 days, and Play has its own limit), then the app closes.
 
 Every screen adapts to landscape, tablets, foldables and resizable windows: a side navigation rail
 in landscape, a two-pane Home with a flashlight stage that scales to fit, and content capped at a
