@@ -9,7 +9,7 @@ val monthlyProductId: String = (findProperty("uvglow.billing.monthlyProductId") 
 
 // Play needs a higher versionCode for every upload. CI passes -Puvglow.versionCode (from the run
 // number); local builds fall back to the value below.
-val appVersionCode: Int = (findProperty("uvglow.versionCode") as String?)?.trim()?.toIntOrNull() ?: 2
+val appVersionCode: Int = (findProperty("uvglow.versionCode") as String?)?.trim()?.toIntOrNull() ?: 3
 
 // AdMob IDs for release builds come from gradle.properties (ADMOB_APP_ID, ADMOB_BANNER_ID).
 // Debug builds always use Google's official test IDs, so real ads are never loaded while testing.
